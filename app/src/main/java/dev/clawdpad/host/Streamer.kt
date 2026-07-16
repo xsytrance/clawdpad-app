@@ -48,9 +48,14 @@ class Streamer(
         return p
     }
 
+    @Volatile private var sizeMini = false
+
     fun play(name: String) {
-        want = name
-        say("→ $name")
+        if (name == "mini") sizeMini = true
+        if (name == "full") sizeMini = false
+        want = if (sizeMini && (name == "wave" || name == "jump"))
+            "mini_$name" else name
+        say("→ $want")
     }
 
     fun quit() {
@@ -105,16 +110,27 @@ class Streamer(
             say("keepalive up — streaming Clawd 🐾")
 
             var current = ""
+            var home = "full"        // what a one-shot returns to
             var frame = 0
             var loop = doc.getJSONObject("loops").getJSONObject("full")
             while (running) {
                 if (want != current) {
                     current = want
+                    val oneShot = current.endsWith("jump")
+                    if (!oneShot) home = current
                     loop = doc.getJSONObject("loops").getJSONObject(current)
                     sendAll(loop.getJSONArray("intro"))
                     frame = 0
-                    if (current == "jump")   // one-shot: bounce then home
-                        want = "full"
+                    if (oneShot) {           // play the bounce through ONCE
+                        val b = loop.getJSONArray("body")
+                        for (i in 0 until b.length()) {
+                            sendAll(b.getJSONArray(i))
+                            pump()
+                            sleep((1000.0 / loop.getInt("fps")).toLong())
+                        }
+                        want = home          // then back to what was playing
+                        continue
+                    }
                 }
                 val body = loop.getJSONArray("body")
                 if (body.length() > 0) {

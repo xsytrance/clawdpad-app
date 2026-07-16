@@ -23,6 +23,7 @@ import androidx.appcompat.app.AppCompatActivity
 class MainActivity : AppCompatActivity() {
 
     private var streamer: Streamer? = null
+    @Volatile private var connecting = false
     private lateinit var status: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -35,6 +36,8 @@ class MainActivity : AppCompatActivity() {
                 runOnUiThread { connect() }
             }
         }, android.os.Handler(mainLooper))
+        // and try immediately: a bridged/attached block may already be there
+        android.os.Handler(mainLooper).postDelayed({ connect() }, 800)
 
         val root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
@@ -86,13 +89,22 @@ class MainActivity : AppCompatActivity() {
         val info = infos.firstOrNull { name(it).contains("light", true) ||
                 name(it).contains("block", true) }
             ?: infos.firstOrNull { it.inputPortCount > 0 } ?: infos[0]
+        if (connecting) return                      // serialize attempts
+        if (streamer?.isAlive == true) {            // already hosting: don't
+            say("already streaming — buttons live") // orphan the good one
+            return
+        }
+        connecting = true
         say("opening ${name(info)}…")
-        streamer?.quit()          // release any previous port FIRST
+        streamer?.quit()          // release any previous (dead) port
         streamer = null
         midi.openDevice(info, { device: MidiDevice? ->
             val port = device?.openInputPort(0)
             if (port == null) {
-                say("couldn't open ${name(info)} — toggle it in MIDI BLE Connect, retry")
+                connecting = false
+                say(if (streamer?.isAlive == true)
+                    "already streaming — buttons live"
+                    else "couldn't open ${name(info)} — toggle in MIDI BLE Connect; if reconnecting, power-cycle the block too")
                 return@openDevice
             }
             // listen to everything the block says (topology, ACKs, faults)
@@ -105,6 +117,7 @@ class MainActivity : AppCompatActivity() {
                 }
             })
             streamer = Streamer(assets, port, ::say).also { it.start() }
+            connecting = false
         }, null)
     }
 
