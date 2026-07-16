@@ -107,6 +107,9 @@ class Streamer(
             repeat(8) { send(begin); sleep(350) }
             lastPing = System.currentTimeMillis()
             beginUntil = lastPing + 12_000   // keep courting during first loops
+            sendAll(doc.getJSONArray("boot"))  // LittleFoot program: ONCE.
+            // never rewritten — the firmware wipes frame data on program
+            // reload (the QR heartbeat experiment, 2026-07-16)
             say("keepalive up — streaming Clawd 🐾")
 
             var current = ""
