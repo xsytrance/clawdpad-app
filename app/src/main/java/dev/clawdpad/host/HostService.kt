@@ -139,6 +139,14 @@ object Host {
                 .also { it.start() }
             connecting = false
             retryDelay = 1000L
+            // NOW a device is connected → the connectedDevice foreground
+            // service's precondition is satisfied. Starting it earlier
+            // (at launch, no device) crashes on Android 14+.
+            runCatching {
+                val i = Intent(ctx, HostService::class.java)
+                    .setAction("PROMOTE")
+                ctx.startForegroundService(i)
+            }
             onHosting()
         }, handler)
     }
@@ -160,8 +168,7 @@ class HostService : Service() {
             stopSelf()
             return START_NOT_STICKY
         }
-        startForeground(NOTE_ID, note(this, Host.lastStatus))
-        Host.start(this)
+        runCatching { startForeground(NOTE_ID, note(this, Host.lastStatus)) }
         return START_STICKY   // resurrect after system kills
     }
 

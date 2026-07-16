@@ -335,14 +335,18 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun connect() {
-        if (checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) !=
-            android.content.pm.PackageManager.PERMISSION_GRANTED)
-            requestPermissions(
-                arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), 9)
+        runCatching {
+            if (android.os.Build.VERSION.SDK_INT >= 33 &&
+                checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) !=
+                android.content.pm.PackageManager.PERMISSION_GRANTED)
+                requestPermissions(
+                    arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), 9)
+        }
         Host.onStatus = { msg -> say(msg) }
         Host.onHosting = { runOnUiThread { sounds?.play("hello") } }
-        startForegroundService(
-            android.content.Intent(this, HostService::class.java))
+        Host.start(applicationContext)   // discovery+connect; promotes to
+                                         // a foreground service once a
+                                         // device is actually open
         streamerBind()
     }
 
