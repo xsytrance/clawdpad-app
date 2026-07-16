@@ -13,6 +13,8 @@ import org.json.JSONObject
  * playback. Every loop is standalone (its intro re-syncs the whole heap),
  * so switching moods is just "play the other loop".
  */
+private const val PROGRAM_SIZE = 100  // bitmap_led_program() length
+
 class Streamer(
     assets: AssetManager,
     private val port: MidiInputPort,
@@ -25,6 +27,7 @@ class Streamer(
 
     @Volatile private var want = "full"
     @Volatile private var running = true
+    @Volatile var music: MusicMode? = null   // non-null = LIVE DANCE mode
     private var lastPing = 0L
     private var beginUntil = 0L
     private var lastBegin = 0L
@@ -81,6 +84,29 @@ class Streamer(
         }
     }
 
+    /** Live rendering path: ClawdRenderer frames diff-streamed via the
+     *  golden-tested HeapStreamer. Runs until music mode is cleared. */
+    private fun liveDance(m: MusicMode) {
+        val hs = HeapStreamer(9, 1)
+        hs.adoptState()   // program already on device; never rewrite it
+        val t0 = System.currentTimeMillis()
+        var first = true
+        while (running && music != null) {
+            val t = (System.currentTimeMillis() - t0) / 1000.0
+            val frame = ClawdRenderer.dance(t, m.energy, m.bounce)
+            hs.setBytes(PROGRAM_SIZE, ClawdRenderer.rgb565(frame))
+            if (first) {
+                hs.seedIndex(nextIndex)
+                hs.markUnknownFrameArea(PROGRAM_SIZE)
+                first = false
+            }
+            for (pkt in hs.drain()) send(pkt)
+            nextIndex = hs.packetIndex
+            pump()
+            sleep(80)   // ~12fps live
+        }
+    }
+
     private fun sendAll(arr: org.json.JSONArray) {
         for (i in 0 until arr.length()) {
             var pkt = Base64.decode(arr.getString(i), Base64.DEFAULT)
@@ -99,7 +125,7 @@ class Streamer(
             val hs = doc.getJSONArray("handshake")
             for (i in 0 until hs.length()) {
                 send(Base64.decode(hs.getString(i), Base64.DEFAULT))
-                sleep(longArrayOf(700, 900, 400, 600)[i])  // serial, topo, end, begin — generous over BLE
+                sleep(longArrayOf(700, 900, 400, 600, 400)[i])  // serial, topo, end, begin — generous over BLE
             }
             // blocksd re-sends beginAPIMode until the device engages —
             // a single send gets lost in BLE latency. Court it properly.
@@ -134,6 +160,12 @@ class Streamer(
                         want = home          // then back to what was playing
                         continue
                     }
+                }
+                val m = music
+                if (m != null) {                 // LIVE: render + diff-stream
+                    liveDance(m)
+                    current = ""                 // re-intro on return to baked
+                    continue
                 }
                 val body = loop.getJSONArray("body")
                 if (body.length() > 0) {

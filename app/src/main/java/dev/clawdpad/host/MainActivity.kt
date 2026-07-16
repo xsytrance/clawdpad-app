@@ -24,6 +24,8 @@ class MainActivity : AppCompatActivity() {
 
     private var streamer: Streamer? = null
     private var lastTouch = 0L
+    private var musicMode: MusicMode? = null
+    private var sounds: Sounds? = null
     @Volatile private var connecting = false
     private lateinit var status: TextView
 
@@ -73,8 +75,36 @@ class MainActivity : AppCompatActivity() {
         btn("👋 Wave") { streamer?.play("wave") }
         btn("🎉 Jump!") { streamer?.play("jump") }
         btn("🔳 QR code") { streamer?.play("qr") }
+        btn("🎵 DANCE MODE — play some music!") { toggleDance() }
 
         setContentView(ScrollView(this).apply { addView(root) })
+        sounds = Sounds(this)
+    }
+
+    private fun toggleDance() {
+        if (musicMode != null) {                     // stop dancing
+            streamer?.music = null
+            musicMode?.stop()
+            musicMode = null
+            say("dance over — back to his life")
+            return
+        }
+        if (checkSelfPermission(android.Manifest.permission.RECORD_AUDIO) !=
+            android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(
+                arrayOf(android.Manifest.permission.RECORD_AUDIO), 7)
+            say("allow audio access (it's how he hears the music), then tap again")
+            return
+        }
+        val m = MusicMode()
+        if (!m.start()) {
+            say("couldn't open the visualizer — is media playing?")
+            return
+        }
+        musicMode = m
+        streamer?.music = m
+        sounds?.play("boop")
+        say("🎵 he's listening — play something with a beat")
     }
 
     private fun say(msg: String) = runOnUiThread { status.text = msg }
@@ -127,6 +157,7 @@ class MainActivity : AppCompatActivity() {
             })
             streamer = Streamer(assets, port, ::say).also { it.start() }
             connecting = false
+            sounds?.play("hello")
         }, null)
     }
 

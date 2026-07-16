@@ -365,6 +365,13 @@ class HeapStreamer(private val deviceIndex: Int, startIndex: Int) {
         System.arraycopy(data, 0, target, offset, data.size)
     }
 
+    fun seedIndex(i: Int) { packetIndex = i and 0x3FF }
+
+    /** Adopt an in-progress session: device already has the program and
+     *  some frame; do NOT do the virgin full-heap write (rewriting the
+     *  program area wipes frame data — firmware law). */
+    fun adoptState() { virgin = false }
+
     fun markUnknownFrameArea(from: Int) {
         // force full rewrite of frame area on next drain (mood-switch sync)
         for (i in from until Protocol.HEAP_SIZE)
