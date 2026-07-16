@@ -63,8 +63,8 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-        window.statusBarColor = BG
+        window.statusBarColor = BG  // no KEEP_SCREEN_ON: the foreground
+        // service keeps him alive with the screen off (battery kindness)
 
         val root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
@@ -234,14 +234,8 @@ class MainActivity : AppCompatActivity() {
         })
         sounds = Sounds(this)
 
-        // auto-host the moment a block appears (USB plug / BLE bridge)
-        val midi = getSystemService(MIDI_SERVICE) as MidiManager
-        midi.registerDeviceCallback(object : MidiManager.DeviceCallback() {
-            override fun onDeviceAdded(info: MidiDeviceInfo) {
-                runOnUiThread { connect() }
-            }
-        }, android.os.Handler(mainLooper))
-        android.os.Handler(mainLooper).postDelayed({ connect() }, 700)
+        // the Host service owns discovery, connection, and resurrection
+        android.os.Handler(mainLooper).postDelayed({ connect() }, 500)
     }
 
     /** press animation + haptic on any view */
@@ -341,64 +335,28 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun connect() {
-        val midi = getSystemService(MIDI_SERVICE) as MidiManager
-        val infos = midi.devices
-        if (infos.isEmpty()) {
-            say("no block found — plug in via USB, or bridge in MIDI BLE Connect")
-            return
-        }
-        val info = infos.firstOrNull { name(it).contains("light", true) ||
-                name(it).contains("block", true) }
-            ?: infos.firstOrNull { it.inputPortCount > 0 } ?: infos[0]
-        if (connecting) return
-        if (streamer?.isAlive == true) {
-            say("already hosting — he's yours")
-            return
-        }
-        connecting = true
-        say("opening ${name(info)}…")
-        streamer?.quit()
-        streamer = null
-        midi.openDevice(info, { device: MidiDevice? ->
-            val port = device?.openInputPort(0)
-            if (port == null) {
-                connecting = false
-                say(if (streamer?.isAlive == true) "already hosting — he's yours"
-                    else "couldn't open ${name(info)} — toggle in MIDI BLE Connect; if reconnecting, power-cycle the block too")
-                return@openDevice
-            }
-            val blockState = Blocks.State()
-            val asm = SysexAssembler { sysex ->
-                android.util.Log.i("clawdpad-rx",
-                    sysex.joinToString(" ") { "%02X".format(it) })
-                Blocks.decode(sysex, blockState)
-                if (Touch.isTouchStart(sysex)) {
-                    val now = System.currentTimeMillis()
-                    val double = now - lastTouch < 600
-                    lastTouch = now
-                    streamer?.play(if (double) "jump" else "wave")
-                }
-            }
-            device.openOutputPort(0)?.connect(
-                object : android.media.midi.MidiReceiver() {
-                    override fun onSend(msg: ByteArray, off: Int, len: Int,
-                                        ts: Long) {
-                        asm.feed(msg, off, len)
-                    }
-                })
-            streamer = Streamer(assets, port, ::say, blockState)
-                .also { it.start() }
-            connecting = false
-            sounds?.play("hello")
-        }, null)
+        if (checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) !=
+            android.content.pm.PackageManager.PERMISSION_GRANTED)
+            requestPermissions(
+                arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), 9)
+        Host.onStatus = { msg -> say(msg) }
+        Host.onHosting = { runOnUiThread { sounds?.play("hello") } }
+        startForegroundService(
+            android.content.Intent(this, HostService::class.java))
+        streamerBind()
+    }
+
+    /** the activity always talks to whatever streamer the Host holds */
+    private fun streamerBind() {
+        streamer = Host.streamer
+        android.os.Handler(mainLooper).postDelayed({ streamerBind() }, 1500)
     }
 
     private fun name(i: MidiDeviceInfo): String =
         i.properties.getString(MidiDeviceInfo.PROPERTY_NAME) ?: "midi device"
 
     override fun onDestroy() {
-        musicMode?.stop()
-        streamer?.quit()
-        super.onDestroy()
+        musicMode?.stop()   // ears die with the UI; the HOST lives on —
+        super.onDestroy()   // Clawd survives the app closing, by design
     }
 }

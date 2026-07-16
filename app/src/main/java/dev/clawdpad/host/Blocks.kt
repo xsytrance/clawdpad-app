@@ -22,6 +22,7 @@ object Blocks {
 
     class State {
         @Volatile var lastAck = -1
+        @Volatile var lastAckAt = 0L
         @Volatile var topologyIndex = -1
         @Volatile var serial = ""
         @Volatile var battery = -1
@@ -55,6 +56,7 @@ object Blocks {
                     if (totalBits - bitsRead < PACKET_COUNTER) break@loop
                     val c = read(PACKET_COUNTER)
                     st.lastAck = c
+                    st.lastAckAt = System.currentTimeMillis()
                     events.add("ack:$deviceIndex:$c")
                 }
                 0x01, 0x04 -> {                              // TOPOLOGY (+extend)

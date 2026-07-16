@@ -48,6 +48,6 @@ class ClawdView(context: Context) : View(context) {
                     if (red + g + b < 12) r * 0.45f else r, paint)
             }
         }
-        postInvalidateOnAnimation()
+        postDelayed({ invalidate() }, 33)   // ~30fps: plenty for 225 dots
     }
 }
