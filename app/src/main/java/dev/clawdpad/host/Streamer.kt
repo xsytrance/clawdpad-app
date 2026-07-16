@@ -28,6 +28,25 @@ class Streamer(
     private var lastPing = 0L
     private var beginUntil = 0L
     private var lastBegin = 0L
+    private var nextIndex = 1   // device ACKs counter 0 post-topology; first
+                                // data packet it accepts is 1 (10-bit wrap)
+
+    /** Rewrite a SharedDataChange packet's 16-bit index + checksum.
+     *  Bit-exact port of the Python renumber() (golden-tested). */
+    private fun renumber(pkt: ByteArray, index: Int): ByteArray {
+        val p = pkt.copyOf()
+        for (k in 0 until 16) {
+            val bit = 7 + k
+            val bi = 6 + bit / 7
+            val off = bit % 7
+            val v = (index shr k) and 1
+            p[bi] = ((p[bi].toInt() and (1 shl off).inv()) or (v shl off)).toByte()
+        }
+        var cs = (p.size - 8) and 0xFF
+        for (i in 6 until p.size - 2) cs = (cs + (cs * 2 + (p[i].toInt() and 0xFF))) and 0xFF
+        p[p.size - 2] = (cs and 0x7F).toByte()
+        return p
+    }
 
     fun play(name: String) {
         want = name
@@ -59,7 +78,12 @@ class Streamer(
 
     private fun sendAll(arr: org.json.JSONArray) {
         for (i in 0 until arr.length()) {
-            send(Base64.decode(arr.getString(i), Base64.DEFAULT))
+            var pkt = Base64.decode(arr.getString(i), Base64.DEFAULT)
+            if (pkt.size > 8 && (pkt[6].toInt() and 0x7F) == 0x02) {
+                pkt = renumber(pkt, nextIndex)      // live device-wide counter
+                nextIndex = (nextIndex + 1) and 0x3FF
+            }
+            send(pkt)
             pump()
         }
     }
