@@ -53,12 +53,13 @@ object Clawdrobe {
                 for (x in 5..9) px(buf, x + dx, 1 + dy, 180, 60, 70) // band
             }
             "shades" -> {
-                val yy = 5 + dy
-                for (x in 3..5) px(buf, x + dx + look, yy, 18, 16, 20)
-                for (x in 9..11) px(buf, x + dx + look, yy, 18, 16, 20)
-                for (x in 6..8) px(buf, x + dx + look, yy, 30, 26, 32)
-                px(buf, 4 + dx + look, yy, 90, 90, 110)  // glint
-                px(buf, 10 + dx + look, yy, 90, 90, 110)
+                for (yy in intArrayOf(5 + dy, 6 + dy)) {  // cover the eyes
+                    for (x in 3..5) px(buf, x + dx + look, yy, 18, 16, 20)
+                    for (x in 9..11) px(buf, x + dx + look, yy, 18, 16, 20)
+                }
+                for (x in 6..8) px(buf, x + dx + look, 5 + dy, 30, 26, 32)
+                px(buf, 4 + dx + look, 5 + dy, 90, 90, 110)  // glint
+                px(buf, 10 + dx + look, 5 + dy, 90, 90, 110)
             }
             "party" -> {
                 px(buf, 7 + dx, 0 + dy, 255, 210, 60)

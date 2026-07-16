@@ -367,9 +367,11 @@ class MainActivity : AppCompatActivity() {
                     else "couldn't open ${name(info)} — toggle in MIDI BLE Connect; if reconnecting, power-cycle the block too")
                 return@openDevice
             }
+            val blockState = Blocks.State()
             val asm = SysexAssembler { sysex ->
                 android.util.Log.i("clawdpad-rx",
                     sysex.joinToString(" ") { "%02X".format(it) })
+                Blocks.decode(sysex, blockState)
                 if (Touch.isTouchStart(sysex)) {
                     val now = System.currentTimeMillis()
                     val double = now - lastTouch < 600
@@ -384,7 +386,8 @@ class MainActivity : AppCompatActivity() {
                         asm.feed(msg, off, len)
                     }
                 })
-            streamer = Streamer(assets, port, ::say).also { it.start() }
+            streamer = Streamer(assets, port, ::say, blockState)
+                .also { it.start() }
             connecting = false
             sounds?.play("hello")
         }, null)

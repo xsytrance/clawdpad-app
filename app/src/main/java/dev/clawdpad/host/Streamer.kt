@@ -19,7 +19,10 @@ class Streamer(
     assets: AssetManager,
     private val port: MidiInputPort,
     private val say: (String) -> Unit,
+    private val blocks: Blocks.State = Blocks.State(),
 ) : Thread("clawd-streamer") {
+
+    @Volatile private var deviceIdx = 9   // replaced by live topology
 
     private val doc = JSONObject(
         assets.open("stream.json").readBytes().decodeToString())
@@ -70,6 +73,11 @@ class Streamer(
     }
 
     private fun send(bytes: ByteArray) {
+        // retarget every packet at the live topology index (checksum
+        // covers only the payload, so the header byte is free to edit)
+        if (bytes.size > 6 && bytes[0] == 0xF0.toByte() &&
+            bytes[4] == 0x77.toByte())
+            bytes[5] = (deviceIdx and 0x3F).toByte()
         port.send(bytes, 0, bytes.size)
     }
 
@@ -140,6 +148,18 @@ class Streamer(
             // a single send gets lost in BLE latency. Court it properly.
             val begin = Base64.decode(hs.getString(3), Base64.DEFAULT)
             repeat(8) { send(begin); sleep(350) }
+            // live sync: adopt the block's real index + packet counter
+            // (kills the power-cycle ritual, works with any block)
+            val deadline = System.currentTimeMillis() + 3000
+            while (System.currentTimeMillis() < deadline &&
+                   (blocks.topologyIndex < 0 || blocks.lastAck < 0))
+                sleep(100)
+            if (blocks.topologyIndex >= 0) deviceIdx = blocks.topologyIndex
+            nextIndex = if (blocks.lastAck >= 0)
+                (blocks.lastAck + 1) and 0x3FF else 1
+            if (blocks.serial.isNotEmpty())
+                say("synced to ${blocks.serial} (idx $deviceIdx, " +
+                    "battery ${blocks.battery * 100 / 31}%)")
             lastPing = System.currentTimeMillis()
             beginUntil = lastPing + 12_000   // keep courting during first loops
             sendAll(doc.getJSONArray("boot"))  // LittleFoot program: ONCE.
