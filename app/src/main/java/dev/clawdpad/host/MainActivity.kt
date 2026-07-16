@@ -29,6 +29,15 @@ class MainActivity : AppCompatActivity() {
     private var lastTouch = 0L
     private var musicMode: MusicMode? = null
     private var sounds: Sounds? = null
+    private var lyricSparks: LyricSparks? = null
+    private var lyricTimer: android.os.Handler? = null
+
+    private fun lyricTick() {
+        val ls = lyricSparks ?: return
+        val info = ls.refresh()
+        if (musicMode != null) say("🎵 dancing · $info")
+        lyricTimer?.postDelayed({ lyricTick() }, 4000)
+    }
     @Volatile private var connecting = false
 
     private lateinit var status: TextView
@@ -289,6 +298,9 @@ class MainActivity : AppCompatActivity() {
     private fun toggleDance() {
         if (musicMode != null) {
             streamer?.music = null
+            streamer?.lyrics = null
+            lyricSparks = null
+            lyricTimer?.removeCallbacksAndMessages(null)
             musicMode?.stop()
             musicMode = null
             setMode("awake")
@@ -312,6 +324,18 @@ class MainActivity : AppCompatActivity() {
         streamer?.music = m
         portrait.music = m
         setMode("dance")
+        // Lyric Sparks ride along when we can see the media session
+        val ls = LyricSparks(this)
+        if (!ls.accessGranted()) {
+            startActivity(android.content.Intent(
+                "android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS"))
+            say("enable clawdpad in notification access for LYRIC SPARKS, then re-toggle dance")
+        } else {
+            lyricSparks = ls
+            streamer?.lyrics = ls
+            lyricTimer = android.os.Handler(mainLooper)
+            lyricTick()
+        }
         danceCard.background = rounded(CARD, CORAL, 22)
         say("🎵 listening via ${m.source} — play something with a beat")
     }

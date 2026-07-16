@@ -29,6 +29,7 @@ class Streamer(
     @Volatile private var running = true
     @Volatile var music: MusicMode? = null   // non-null = LIVE DANCE mode
     @Volatile var live = false               // costume on = live rendering
+    @Volatile var lyrics: LyricSparks? = null // words timed to the song
     private var lastPing = 0L
     private var beginUntil = 0L
     private var lastBegin = 0L
@@ -95,8 +96,13 @@ class Streamer(
         while (running && (music != null || live)) {
             val t = (System.currentTimeMillis() - t0) / 1000.0
             val m = music
-            val frame = if (m != null) ClawdRenderer.dance(t, m.energy, m.bounce)
-                        else ClawdRenderer.awake(t)
+            val spark = lyrics?.current()
+            val frame = when {
+                spark != null -> ClawdRenderer.lyric(spark.first,
+                    spark.second, spark.third, m?.energy ?: 0.6)
+                m != null -> ClawdRenderer.dance(t, m.energy, m.bounce)
+                else -> ClawdRenderer.awake(t)
+            }
             hs.setBytes(PROGRAM_SIZE, ClawdRenderer.rgb565(frame))
             if (first) {
                 hs.seedIndex(nextIndex)
