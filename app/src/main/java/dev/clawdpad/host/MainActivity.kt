@@ -104,7 +104,7 @@ class MainActivity : AppCompatActivity() {
         musicMode = m
         streamer?.music = m
         sounds?.play("boop")
-        say("🎵 he's listening — play something with a beat")
+        say("🎵 listening via ${m.source} — play something with a beat")
     }
 
     private fun say(msg: String) = runOnUiThread { status.text = msg }
