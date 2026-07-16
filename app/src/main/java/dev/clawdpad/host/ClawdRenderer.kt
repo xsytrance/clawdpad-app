@@ -23,6 +23,9 @@ object ClawdRenderer {
     /** current outfit (Clawdrobe id); "none" = just clawd */
     @Volatile var costume: String = "none"
 
+    /** scrolling message ("" = off); takes the glass when set */
+    @Volatile var msg: String = ""
+
     // official icon geometry (see clawdpadd.py CLAWD_*)
     private val BODY = intArrayOf(2, 3, 13, 11)
     private val ARMS = arrayOf(intArrayOf(0, 7, 2, 9), intArrayOf(13, 7, 15, 9))
@@ -137,8 +140,24 @@ object ClawdRenderer {
         return buf
     }
 
+    /** Scroll text right-to-left across the glass (art/message mode). */
+    fun marquee(text: String, t: Double, color: IntArray): ByteArray {
+        val buf = ByteArray(W * H * 3)
+        val glyphs = text.uppercase().map { FONT[it] ?: FONT['?']!! }
+        val width = glyphs.size * 4
+        var gx = 15 - ((t * 11).toInt() % (width + 15))
+        for (rows in glyphs) {
+            for (rr in 0 until 5) for (cc in 0 until 3)
+                if (rows[rr][cc] == '1')
+                    blit(buf, gx + cc, 5 + rr, color[0], color[1], color[2])
+            gx += 4
+        }
+        return buf
+    }
+
     /** Awake idle: breathe, bob, pace, blink, glance. Port of frame_awake. */
     fun awake(t: Double): ByteArray {
+        if (msg.isNotEmpty()) return marquee(msg, t, CORAL)
         val breath = 0.72 + 0.28 * sin(t * 2 * PI / 6.5)
         val dx = (1.5 * sin(t * 0.13)).toInt()
         val dy = (0.5 * sin(t * 2 * PI / 6.5)).toInt()

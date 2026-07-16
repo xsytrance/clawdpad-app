@@ -13,6 +13,7 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.WindowManager
 import android.widget.GridLayout
+import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
@@ -44,6 +45,9 @@ class MainActivity : AppCompatActivity() {
     private lateinit var dot: View
     private lateinit var portrait: ClawdView
     private lateinit var danceCard: LinearLayout
+    private lateinit var robeShelf: LinearLayout
+    private val robeTabs = HashMap<String, TextView>()
+    private var robeCat = "prop"
 
     private val BG = Color.parseColor("#171310")
     private val CARD = Color.parseColor("#211B17")
@@ -185,40 +189,68 @@ class MainActivity : AppCompatActivity() {
             setTextColor(DIM)
             setPadding(dp(4), dp(18), 0, dp(8))
         })
-        val shelf = LinearLayout(this).apply {
+        // category tabs — keeps a growing wardrobe scannable
+        val tabRow = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
+            setPadding(0, 0, 0, dp(8))
         }
-        val shelfCards = mutableMapOf<String, LinearLayout>()
-        for (c in Clawdrobe.ALL) {
-            val cc = LinearLayout(this).apply {
-                orientation = LinearLayout.VERTICAL
-                gravity = Gravity.CENTER
-                background = rounded(CARD, BORDER, 20)
-                setPadding(dp(16), dp(12), dp(16), dp(10))
-                pressable {
-                    sounds?.play("boop", 0.4f)
-                    wear(c.id, shelfCards)
-                }
+        for ((key, lbl) in listOf("prop" to "🎩 props", "character" to "🎭 characters")) {
+            val tab = TextView(this).apply {
+                text = lbl; textSize = 14f; gravity = Gravity.CENTER
+                setTextColor(INK)
+                background = rounded(CARD, BORDER, 16)
+                setPadding(dp(16), dp(9), dp(16), dp(9))
+                pressable { robeCat = key; sounds?.play("boop", 0.4f); populateRobe() }
             }
-            cc.addView(TextView(this).apply {
-                text = c.emoji; textSize = 26f; gravity = Gravity.CENTER
-            })
-            cc.addView(TextView(this).apply {
-                text = c.label; textSize = 12f
-                setTextColor(INK); gravity = Gravity.CENTER
-                setPadding(0, dp(3), 0, 0)
-            })
-            shelfCards[c.id] = cc
-            shelf.addView(cc, LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.WRAP_CONTENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT).apply {
-                rightMargin = dp(8)
+            robeTabs[key] = tab
+            tabRow.addView(tab, LinearLayout.LayoutParams(0,
+                LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply {
+                if (key == "prop") rightMargin = dp(8)
             })
         }
+        root.addView(tabRow)
+        robeShelf = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
         root.addView(android.widget.HorizontalScrollView(this).apply {
             isHorizontalScrollBarEnabled = false
-            addView(shelf)
+            addView(robeShelf)
         })
+        populateRobe()
+
+        // ── message / art mode: put words on the glass ──────────────
+        root.addView(TextView(this).apply {
+            text = "PUT WORDS ON HIM"
+            textSize = 12f; letterSpacing = 0.18f
+            setTextColor(DIM); setPadding(dp(4), dp(18), 0, dp(8))
+        })
+        val msgRow = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+        }
+        val msgField = EditText(this).apply {
+            hint = "type a message…"
+            setTextColor(INK); setHintTextColor(DIM); textSize = 15f
+            background = rounded(CARD, BORDER, 14)
+            setPadding(dp(14), dp(12), dp(14), dp(12))
+        }
+        msgRow.addView(msgField, LinearLayout.LayoutParams(0,
+            LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+        val sendMsg = TextView(this).apply {
+            text = "📣"; textSize = 22f; gravity = Gravity.CENTER
+            background = rounded(CORAL, radius = 14)
+            setPadding(dp(14), dp(10), dp(14), dp(10))
+            pressable {
+                sounds?.play("boop", 0.4f)
+                val txt = msgField.text.toString().trim()
+                ClawdRenderer.msg = txt
+                updateLive()
+                setMode("awake")
+                say(if (txt.isEmpty()) "cleared the marquee" else "scrolling: $txt")
+            }
+        }
+        msgRow.addView(sendMsg, LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.WRAP_CONTENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT).apply { leftMargin = dp(8) })
+        root.addView(msgRow)
 
         root.addView(TextView(this).apply {
             text = "he lives on the block · pet him there · clawdpad v0.4"
@@ -264,16 +296,54 @@ class MainActivity : AppCompatActivity() {
 
     private fun setMode(m: String) { portrait.mode = m }
 
-    private fun wear(id: String, cards: Map<String, LinearLayout>) {
+    /** live rendering is needed whenever a costume or a message is active */
+    private fun updateLive() {
+        val on = ClawdRenderer.costume != "none" || ClawdRenderer.msg.isNotEmpty()
+        Host.streamer?.live = on
+        streamer?.live = on
+    }
+
+    private fun wear(id: String) {
         ClawdRenderer.costume = id
-        streamer?.live = id != "none"    // costumes are live-rendered
+        updateLive()                         // costumes are live-rendered
         setMode("awake")
-        for ((cid, v) in cards)
-            v.background = rounded(CARD,
-                if (cid == id) CORAL else BORDER, 20)
         val c = Clawdrobe.byId(id)
         say(if (id == "none") "back to his birthday suit"
             else "wearing: ${c?.emoji} ${c?.label}")
+        populateRobe()                       // refresh the selected ring
+    }
+
+    /** Rebuild the costume shelf for the active category, ring the worn one,
+     *  and highlight the active tab. "just clawd" always leads for a 1-tap
+     *  reset. */
+    private fun populateRobe() {
+        for ((key, tab) in robeTabs)
+            tab.background = rounded(CARD, if (key == robeCat) CORAL else BORDER, 16)
+        robeShelf.removeAllViews()
+        val worn = ClawdRenderer.costume
+        val items = listOf(Clawdrobe.byId("none")!!) +
+            Clawdrobe.ALL.filter { it.id != "none" &&
+                (if (robeCat == "character") it.isSkin else !it.isSkin) }
+        for (c in items) {
+            val cc = LinearLayout(this).apply {
+                orientation = LinearLayout.VERTICAL
+                gravity = Gravity.CENTER
+                background = rounded(CARD, if (c.id == worn) CORAL else BORDER, 20)
+                setPadding(dp(16), dp(12), dp(16), dp(10))
+                pressable { sounds?.play("boop", 0.4f); wear(c.id) }
+            }
+            cc.addView(TextView(this).apply {
+                text = c.emoji; textSize = 26f; gravity = Gravity.CENTER
+            })
+            cc.addView(TextView(this).apply {
+                text = c.label; textSize = 12f
+                setTextColor(INK); gravity = Gravity.CENTER
+                setPadding(0, dp(3), 0, 0)
+            })
+            robeShelf.addView(cc, LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT).apply { rightMargin = dp(8) })
+        }
     }
 
     private fun say(msg: String) = runOnUiThread {
