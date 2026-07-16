@@ -29,9 +29,22 @@ object Clawdrobe {
         Costume("crown", "👑", "royalty", false),
         Costume("phones", "🎧", "vibin'", false),
         Costume("scarf", "🧣", "cozy", false),
+        Costume("bow", "🎀", "cutie", false),
+        Costume("halo", "😇", "angel", false),
+        Costume("horns", "😈", "lil devil", false),
+        Costume("wizard", "🧙", "wizard", false),
+        Costume("cowboy", "🤠", "howdy", false),
+        Costume("flower", "🌻", "bloom", false),
         Costume("ghost", "👻", "spooky pal", true),
         Costume("puff", "🌸", "pink puff", true),
         Costume("chomper", "🟡", "chomper", true),
+        Costume("robot", "🤖", "beep boop", true),
+        Costume("cat", "🐱", "kitty", true),
+        Costume("frog", "🐸", "froggy", true),
+        Costume("alien", "👽", "alien", true),
+        Costume("pumpkin", "🎃", "spooky", true),
+        Costume("star", "⭐", "superstar", true),
+        Costume("bee", "🐝", "buzzy", true),
     )
 
     fun byId(id: String) = ALL.firstOrNull { it.id == id }
@@ -92,7 +105,147 @@ object Clawdrobe {
                 px(buf, 10 + dx, 12 + dy, 200, 60, 60)  // tail, flutters
                 if (sin(t * 2.3) > 0.3) px(buf, 11 + dx, 12 + dy, 200, 60, 60)
             }
+            "bow" -> {
+                px(buf, 6 + dx, 10 + dy, 235, 90, 140); px(buf, 8 + dx, 10 + dy, 235, 90, 140)
+                px(buf, 7 + dx, 10 + dy, 255, 150, 190)
+                px(buf, 6 + dx, 9 + dy, 235, 90, 140); px(buf, 8 + dx, 9 + dy, 235, 90, 140)
+            }
+            "halo" -> {
+                for (x in 5..9) px(buf, x + dx, 0 + dy, 255, 225, 90)
+                px(buf, 5 + dx, 1 + dy, 255, 225, 90); px(buf, 9 + dx, 1 + dy, 255, 225, 90)
+            }
+            "horns" -> {
+                px(buf, 3 + dx, 2 + dy, 200, 40, 40); px(buf, 3 + dx, 1 + dy, 220, 60, 60)
+                px(buf, 11 + dx, 2 + dy, 200, 40, 40); px(buf, 11 + dx, 1 + dy, 220, 60, 60)
+            }
+            "wizard" -> {
+                px(buf, 7 + dx, 0 + dy, 120, 80, 200)
+                for (x in 6..8) px(buf, x + dx, 1 + dy, 120, 80, 200)
+                for (x in 4..10) px(buf, x + dx, 2 + dy, 100, 66, 175)
+                px(buf, 7 + dx, 1 + dy, 255, 235, 120)   // star
+            }
+            "cowboy" -> {
+                for (x in 2..12) px(buf, x + dx, 2 + dy, 150, 100, 55)
+                for (x in 5..9) px(buf, x + dx, 1 + dy, 120, 80, 45)
+                for (x in 5..9) px(buf, x + dx, 0 + dy, 120, 80, 45)
+            }
+            "flower" -> {
+                px(buf, 7 + dx, 0 + dy, 255, 210, 70)
+                px(buf, 6 + dx, 0 + dy, 235, 100, 170); px(buf, 8 + dx, 0 + dy, 235, 100, 170)
+                px(buf, 7 + dx, 1 + dy, 90, 190, 90)
+            }
         }
+    }
+
+    private fun pxb(buf: ByteArray, x: Int, y: Int, r: Double, g: Double, b: Double) =
+        px(buf, x, y, r.toInt(), g.toInt(), b.toInt())
+
+    fun robot(brightness: Double, dx: Int, dy: Int, eyesOpen: Boolean): ByteArray {
+        val buf = ByteArray(675)
+        val s = 200 * brightness; val d = 120 * brightness
+        for (y in 3..11) for (x in 3..11) pxb(buf, x + dx, y + dy, s, s, 210 * brightness)
+        for (x in 2..12) { pxb(buf, x + dx, 3 + dy, d, d, d); pxb(buf, x + dx, 11 + dy, d, d, d) }
+        pxb(buf, 7 + dx, 1 + dy, d, d, d)
+        px(buf, 7 + dx, 0 + dy, 255, 80, 80)
+        for (ex in intArrayOf(5, 9)) {
+            val on = if (eyesOpen) intArrayOf(90, 220, 255) else intArrayOf(40, 60, 70)
+            pxb(buf, ex + dx, 6 + dy, on[0] * brightness, on[1] * brightness, on[2] * brightness)
+        }
+        for (x in 5..9) pxb(buf, x + dx, 8 + dy, d, d, d)
+        for (lx in intArrayOf(4, 10)) { pxb(buf, lx + dx, 12 + dy, d, d, d); pxb(buf, lx + dx, 13 + dy, d, d, d) }
+        return buf
+    }
+
+    fun cat(brightness: Double, dx: Int, dy: Int, eyesOpen: Boolean, look: Int): ByteArray {
+        val buf = ClawdRenderer.clawd(brightness, dx, dy, eyesOpen, look, 0, 0,
+            intArrayOf(230, 150, 90))
+        for (ex in intArrayOf(2, 12)) {
+            pxb(buf, ex + dx, 2 + dy, 230 * brightness, 150 * brightness, 90 * brightness)
+            pxb(buf, ex + dx, 1 + dy, 200 * brightness, 120 * brightness, 70 * brightness)
+        }
+        for (sgn in intArrayOf(-1, 1)) {
+            px(buf, 7 + sgn * 4 + dx, 7 + dy, 240, 240, 230)
+            px(buf, 7 + sgn * 5 + dx, 7 + dy, 240, 240, 230)
+        }
+        px(buf, 7 + dx, 7 + dy, 255, 150, 170)
+        return buf
+    }
+
+    fun frog(brightness: Double, dx: Int, dy: Int, eyesOpen: Boolean): ByteArray {
+        val buf = ByteArray(675)
+        val gd = 80 * brightness
+        for (y in 4..11) for (x in 2..12)
+            if (hypot(x - 7.0 - dx, y - 7.5 - dy) < 5.4)
+                pxb(buf, x + dx, y + dy, gd, 190 * brightness, gd)
+        for (ex in intArrayOf(4, 10)) {
+            pxb(buf, ex + dx, 3 + dy, 210 * brightness, 240 * brightness, 210 * brightness)
+            pxb(buf, ex + dx, 2 + dy, 210 * brightness, 240 * brightness, 210 * brightness)
+            if (eyesOpen) px(buf, ex + dx, 3 + dy, 20, 30, 20)
+        }
+        for (x in 5..9) px(buf, x + dx, 9 + dy, 40, 90, 40)
+        return buf
+    }
+
+    fun alien(brightness: Double, dx: Int, dy: Int, eyesOpen: Boolean): ByteArray {
+        val buf = ByteArray(675)
+        for (y in 2..12) for (x in 3..11) {
+            val w = 1 - abs(y - 5) * 0.06
+            if (abs(x - 7.0 - dx) < 4.2 * w)
+                pxb(buf, x + dx, y + dy, 120 * brightness, 210 * brightness, 120 * brightness)
+        }
+        for (ex in intArrayOf(-2, 2)) {
+            px(buf, 7 + ex + dx, 5 + dy, 10, 15, 10)
+            px(buf, 7 + ex + dx - (if (ex < 0) -1 else 1), 5 + dy, 10, 15, 10)
+            px(buf, 7 + ex + dx, 6 + dy, 10, 15, 10)
+        }
+        return buf
+    }
+
+    fun pumpkin(brightness: Double, dx: Int, dy: Int, eyesOpen: Boolean): ByteArray {
+        val buf = ByteArray(675)
+        for (y in 2..12) for (x in 1..13)
+            if (hypot((x - 7.0 - dx) * 0.85, y - 7.0 - dy) < 5.6)
+                pxb(buf, x + dx, y + dy, 255 * brightness, 140 * brightness, 20 * brightness)
+        pxb(buf, 7 + dx, 1 + dy, 90 * brightness, 150 * brightness, 60 * brightness)
+        val g = if (eyesOpen) 30 else 10
+        for (ex in intArrayOf(4, 10)) { px(buf, ex + dx, 5 + dy, g, g, g); px(buf, ex + dx, 6 + dy, g, g, g) }
+        px(buf, 7 + dx, 6 + dy, g, g, g)
+        for (x in 4..10) px(buf, x + dx, 9 + dy, g, g, g)
+        for (x in intArrayOf(5, 7, 9)) px(buf, x + dx, 8 + dy, g, g, g)
+        return buf
+    }
+
+    private val STAR_ROWS = arrayOf(
+        "0000001000000","0000011100000","0000011100000","1111111111111",
+        "0111111111110","0011111111100","0001111111000","0011111111100",
+        "0011110111100","0111100011110","0110000000110","0000000000000")
+
+    fun star(brightness: Double, dx: Int, dy: Int, eyesOpen: Boolean): ByteArray {
+        val buf = ByteArray(675)
+        for (r in STAR_ROWS.indices) for (c in 0..12)
+            if (STAR_ROWS[r][c] == '1')
+                pxb(buf, c + 1 + dx, r + 1 + dy, 255 * brightness, 205 * brightness, 60 * brightness)
+        for (ex in intArrayOf(5, 9)) if (eyesOpen) px(buf, ex + dx, 6 + dy, 40, 30, 10)
+        return buf
+    }
+
+    fun bee(brightness: Double, dx: Int, dy: Int, eyesOpen: Boolean, t: Double): ByteArray {
+        val buf = ByteArray(675)
+        for (y in 5..11) for (x in 4..10)
+            if (hypot(x - 7.0 - dx, y - 8.0 - dy) < 3.6) {
+                val stripe = (y + dy) % 2 == 0
+                pxb(buf, x + dx, y + dy,
+                    if (stripe) 30.0 else 255 * brightness,
+                    if (stripe) 25.0 else 210 * brightness,
+                    if (stripe) 20.0 else 30.0)
+            }
+        for (wx in intArrayOf(3, 11)) {
+            val up = if (sin(t * 12) > 0) 0 else 1
+            px(buf, wx + dx, 5 + up + dy, 220, 230, 255)
+            px(buf, wx + (if (wx < 7) 1 else -1) + dx, 5 + up + dy, 220, 230, 255)
+        }
+        for (ex in intArrayOf(6, 8)) if (eyesOpen) px(buf, ex + dx, 6 + dy, 15, 12, 8)
+        return buf
     }
 
     // ── skins: whole other bodies, same soul ───────────────────────────

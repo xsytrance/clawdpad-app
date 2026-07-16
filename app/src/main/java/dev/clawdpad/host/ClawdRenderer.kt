@@ -123,6 +123,13 @@ object ClawdRenderer {
             "puff" -> Clawdrobe.puff(brightness, dx, dy, eyesOpen, look)
             "chomper" -> Clawdrobe.chomper(brightness, dx, dy, t,
                 facingRight = sin(t * 0.13) >= 0)
+            "robot" -> Clawdrobe.robot(brightness, dx, dy, eyesOpen)
+            "cat" -> Clawdrobe.cat(brightness, dx, dy, eyesOpen, look)
+            "frog" -> Clawdrobe.frog(brightness, dx, dy, eyesOpen)
+            "alien" -> Clawdrobe.alien(brightness, dx, dy, eyesOpen)
+            "pumpkin" -> Clawdrobe.pumpkin(brightness, dx, dy, eyesOpen)
+            "star" -> Clawdrobe.star(brightness, dx, dy, eyesOpen)
+            "bee" -> Clawdrobe.bee(brightness, dx, dy, eyesOpen, t)
             else -> clawd(brightness, dx, dy, eyesOpen, look, armL, armR, tint)
         }
         if (c != "none" && Clawdrobe.byId(c)?.isSkin == false)
