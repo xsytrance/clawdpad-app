@@ -20,6 +20,9 @@ object ClawdRenderer {
     const val H = 15
     val CORAL = intArrayOf(217, 119, 87)
 
+    /** current outfit (Clawdrobe id); "none" = just clawd */
+    @Volatile var costume: String = "none"
+
     // official icon geometry (see clawdpadd.py CLAWD_*)
     private val BODY = intArrayOf(2, 3, 13, 11)
     private val ARMS = arrayOf(intArrayOf(0, 7, 2, 9), intArrayOf(13, 7, 15, 9))
@@ -109,6 +112,24 @@ object ClawdRenderer {
         return buf
     }
 
+    /** Compose a pose in the current costume: skins replace the body,
+     *  props ride on top with the same offsets. */
+    fun dressed(brightness: Double, dx: Int, dy: Int, eyesOpen: Boolean,
+                look: Int, t: Double, armL: Int = 0, armR: Int = 0,
+                tint: IntArray = CORAL): ByteArray {
+        val c = costume
+        val buf = when (c) {
+            "ghost" -> Clawdrobe.ghost(brightness, dx, dy, eyesOpen, look, t)
+            "puff" -> Clawdrobe.puff(brightness, dx, dy, eyesOpen, look)
+            "chomper" -> Clawdrobe.chomper(brightness, dx, dy, t,
+                facingRight = sin(t * 0.13) >= 0)
+            else -> clawd(brightness, dx, dy, eyesOpen, look, armL, armR, tint)
+        }
+        if (c != "none" && Clawdrobe.byId(c)?.isSkin == false)
+            Clawdrobe.applyProp(c, buf, dx, dy, look, t)
+        return buf
+    }
+
     /** Awake idle: breathe, bob, pace, blink, glance. Port of frame_awake. */
     fun awake(t: Double): ByteArray {
         val breath = 0.72 + 0.28 * sin(t * 2 * PI / 6.5)
@@ -116,7 +137,7 @@ object ClawdRenderer {
         val dy = (0.5 * sin(t * 2 * PI / 6.5)).toInt()
         val look = (0.9 * sin(t * 0.31)).toInt()
         val blink = (t % 4.3) < 0.13
-        return clawd(breath, dx, dy, !blink, look)
+        return dressed(breath, dx, dy, !blink, look, t)
     }
 
     /** THE GROOVE: audio-driven. energy 0..1 scales brightness; bounce 0..1
@@ -128,7 +149,12 @@ object ClawdRenderer {
         val sway = (1.8 * sin(t * 2.2)).toInt()
         val brightness = (0.55 + 0.45 * min(1.0, energy + bounce * 0.5))
         val blink = (t % 3.1) < 0.1
-        return clawd(brightness, sway, dy, !blink, 0, armUp, armUp, tint)
+        // headphones auto-equip while he's vibing (unless already dressed)
+        val prev = costume
+        if (prev == "none") costume = "phones"
+        val f = dressed(brightness, sway, dy, !blink, 0, t, armUp, armUp, tint)
+        costume = prev
+        return f
     }
 
     /** Lyric Sparks word card: kinetic pop-in (grow = brightness ramp),

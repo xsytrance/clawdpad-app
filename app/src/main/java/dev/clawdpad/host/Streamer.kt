@@ -28,6 +28,7 @@ class Streamer(
     @Volatile private var want = "full"
     @Volatile private var running = true
     @Volatile var music: MusicMode? = null   // non-null = LIVE DANCE mode
+    @Volatile var live = false               // costume on = live rendering
     private var lastPing = 0L
     private var beginUntil = 0L
     private var lastBegin = 0L
@@ -86,14 +87,16 @@ class Streamer(
 
     /** Live rendering path: ClawdRenderer frames diff-streamed via the
      *  golden-tested HeapStreamer. Runs until music mode is cleared. */
-    private fun liveDance(m: MusicMode) {
+    private fun liveLoop() {
         val hs = HeapStreamer(9, 1)
         hs.adoptState()   // program already on device; never rewrite it
         val t0 = System.currentTimeMillis()
         var first = true
-        while (running && music != null) {
+        while (running && (music != null || live)) {
             val t = (System.currentTimeMillis() - t0) / 1000.0
-            val frame = ClawdRenderer.dance(t, m.energy, m.bounce)
+            val m = music
+            val frame = if (m != null) ClawdRenderer.dance(t, m.energy, m.bounce)
+                        else ClawdRenderer.awake(t)
             hs.setBytes(PROGRAM_SIZE, ClawdRenderer.rgb565(frame))
             if (first) {
                 hs.seedIndex(nextIndex)
@@ -162,8 +165,8 @@ class Streamer(
                     }
                 }
                 val m = music
-                if (m != null) {                 // LIVE: render + diff-stream
-                    liveDance(m)
+                if (m != null || live) {         // LIVE: render + diff-stream
+                    liveLoop()
                     current = ""                 // re-intro on return to baked
                     continue
                 }

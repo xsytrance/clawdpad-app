@@ -168,6 +168,49 @@ class MainActivity : AppCompatActivity() {
         danceCard = card("🎵", "dance mode") { toggleDance() }
         root.addView(grid)
 
+        // ── the Clawdrobe: costumes & characters ─────────────────────
+        root.addView(TextView(this).apply {
+            text = "THE CLAWDROBE"
+            textSize = 12f
+            letterSpacing = 0.18f
+            setTextColor(DIM)
+            setPadding(dp(4), dp(18), 0, dp(8))
+        })
+        val shelf = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+        }
+        val shelfCards = mutableMapOf<String, LinearLayout>()
+        for (c in Clawdrobe.ALL) {
+            val cc = LinearLayout(this).apply {
+                orientation = LinearLayout.VERTICAL
+                gravity = Gravity.CENTER
+                background = rounded(CARD, BORDER, 20)
+                setPadding(dp(16), dp(12), dp(16), dp(10))
+                pressable {
+                    sounds?.play("boop", 0.4f)
+                    wear(c.id, shelfCards)
+                }
+            }
+            cc.addView(TextView(this).apply {
+                text = c.emoji; textSize = 26f; gravity = Gravity.CENTER
+            })
+            cc.addView(TextView(this).apply {
+                text = c.label; textSize = 12f
+                setTextColor(INK); gravity = Gravity.CENTER
+                setPadding(0, dp(3), 0, 0)
+            })
+            shelfCards[c.id] = cc
+            shelf.addView(cc, LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT).apply {
+                rightMargin = dp(8)
+            })
+        }
+        root.addView(android.widget.HorizontalScrollView(this).apply {
+            isHorizontalScrollBarEnabled = false
+            addView(shelf)
+        })
+
         root.addView(TextView(this).apply {
             text = "he lives on the block · pet him there · clawdpad v0.4"
             textSize = 12f
@@ -217,6 +260,18 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setMode(m: String) { portrait.mode = m }
+
+    private fun wear(id: String, cards: Map<String, LinearLayout>) {
+        ClawdRenderer.costume = id
+        streamer?.live = id != "none"    // costumes are live-rendered
+        setMode("awake")
+        for ((cid, v) in cards)
+            v.background = rounded(CARD,
+                if (cid == id) CORAL else BORDER, 20)
+        val c = Clawdrobe.byId(id)
+        say(if (id == "none") "back to his birthday suit"
+            else "wearing: ${c?.emoji} ${c?.label}")
+    }
 
     private fun say(msg: String) = runOnUiThread {
         status.text = msg
