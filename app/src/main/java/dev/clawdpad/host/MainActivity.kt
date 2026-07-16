@@ -23,6 +23,7 @@ import androidx.appcompat.app.AppCompatActivity
 class MainActivity : AppCompatActivity() {
 
     private var streamer: Streamer? = null
+    private var lastTouch = 0L
     @Volatile private var connecting = false
     private lateinit var status: TextView
 
@@ -107,13 +108,21 @@ class MainActivity : AppCompatActivity() {
                     else "couldn't open ${name(info)} — toggle in MIDI BLE Connect; if reconnecting, power-cycle the block too")
                 return@openDevice
             }
-            // listen to everything the block says (topology, ACKs, faults)
+            // listen to everything the block says — and REACT to touch
             val out = device.openOutputPort(0)
+            val asm = SysexAssembler { sysex ->
+                android.util.Log.i("clawdpad-rx",
+                    sysex.joinToString(" ") { "%02X".format(it) })
+                if (Touch.isTouchStart(sysex)) {
+                    val now = System.currentTimeMillis()
+                    val double = now - lastTouch < 600
+                    lastTouch = now
+                    streamer?.play(if (double) "jump" else "wave")
+                }
+            }
             out?.connect(object : android.media.midi.MidiReceiver() {
                 override fun onSend(msg: ByteArray, off: Int, len: Int, ts: Long) {
-                    val hex = msg.copyOfRange(off, off + len)
-                        .joinToString(" ") { "%02X".format(it) }
-                    android.util.Log.i("clawdpad-rx", hex)
+                    asm.feed(msg, off, len)
                 }
             })
             streamer = Streamer(assets, port, ::say).also { it.start() }
