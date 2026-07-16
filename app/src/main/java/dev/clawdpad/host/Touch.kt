@@ -14,6 +14,8 @@ class SysexAssembler(private val onMessage: (ByteArray) -> Unit) {
                     buf.add(b); onMessage(buf.toByteArray()); inside = false
                 }
                 inside -> buf.add(b)
+                else -> android.util.Log.i("clawdpad-midi",
+                    "%02X".format(b))   // non-sysex: notes/pressure/CC (MPE?)
             }
         }
     }
