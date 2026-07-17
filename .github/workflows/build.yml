@@ -14,6 +14,11 @@ on:
 jobs:
   apk:
     runs-on: ubuntu-latest
+    # Creating a Release writes to the repo. Without this the default token is
+    # read-only and the publish step 403s *after* a green build — which is
+    # exactly how v0.2.0 failed the first time.
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
 
