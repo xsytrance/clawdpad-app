@@ -1,0 +1,82 @@
+name: build
+
+# Every push builds and tests. Pushing a v* tag also publishes the APK to a
+# Release — that URL is what the in-app "check for updates" button fetches, and
+# it's why the APK is never committed to the tree (see clawdpad/docs/APP.md,
+# "Distribution").
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # AGP 8.5.2 and kotlinOptions jvmTarget = "17" (app/build.gradle.kts).
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: android-actions/setup-android@v3
+
+      # There is no gradle wrapper in this repo — the README says
+      # `gradle assembleDebug`, not `./gradlew` — so CI pins the version here
+      # instead. AGP 8.5.2 needs Gradle >= 8.7.
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.7'
+
+      # The golden vectors: this app reimplements the ROLI stack in Kotlin, and
+      # these tests are what keep it bit-identical to blocksd. Build nothing if
+      # they fail — a shipped APK that speaks the protocol wrong is worse than
+      # no APK.
+      - name: Test
+        run: gradle test --no-daemon --stacktrace
+
+      - name: Build debug APK
+        run: gradle assembleDebug --no-daemon --stacktrace
+
+      - name: Name the APK after the build
+        id: rename
+        run: |
+          set -euo pipefail
+          src=$(find app/build/outputs/apk/debug -name '*.apk' | head -1)
+          if [ -z "$src" ]; then echo "no APK produced"; exit 1; fi
+          ver="${GITHUB_REF_NAME#v}"
+          [ "$GITHUB_REF_TYPE" = tag ] || ver="dev-${GITHUB_SHA::7}"
+          out="clawdpad-${ver}.apk"
+          mv "$src" "$out"
+          echo "apk=$out" >> "$GITHUB_OUTPUT"
+          echo "sha256=$(sha256sum "$out" | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
+
+      # Every build is downloadable from the run page, tag or not.
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.rename.outputs.apk }}
+          path: ${{ steps.rename.outputs.apk }}
+
+      - name: Release (tags only)
+        if: github.ref_type == 'tag'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ steps.rename.outputs.apk }}
+          generate_release_notes: true
+          # Debug-signed, and that has a consequence worth stating out loud:
+          # Android refuses to upgrade an installed app in place if the signing
+          # key changes, so the day this repo ships a release-signed build,
+          # every sideloaded tester must uninstall first. Keep one key forever
+          # or plan that break deliberately.
+          body: |
+            **Sideload:** download the APK below, open it on the phone, allow
+            "install unknown apps" when Android asks.
+
+            `sha256: ${{ steps.rename.outputs.sha256 }}`
+
+            > Debug-signed. If a future build is release-signed, Android will
+            > refuse to upgrade in place and you'll have to uninstall first.
