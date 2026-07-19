@@ -33,6 +33,7 @@ class Streamer(
     @Volatile var music: MusicMode? = null   // non-null = LIVE DANCE mode
     @Volatile var live = false               // costume on = live rendering
     @Volatile var lyrics: LyricSparks? = null // words timed to the song
+    @Volatile var scene: Scene? = null       // a scene owns the glass outright
     private var lastPing = 0L
     private var beginUntil = 0L
     private var lastBegin = 0L
@@ -101,16 +102,19 @@ class Streamer(
         hs.adoptState()   // program already on device; never rewrite it
         val t0 = System.currentTimeMillis()
         var first = true
-        while (running && (music != null || live)) {
+        while (running && (music != null || live || scene != null)) {
             val t = (System.currentTimeMillis() - t0) / 1000.0
             val m = music
+            val s = scene
             val spark = lyrics?.current()
             val frame = when {
+                s != null -> s.render(t)     // a scene outranks everything
                 spark != null -> ClawdRenderer.lyric(spark.first,
                     spark.second, spark.third, m?.energy ?: 0.6)
                 m != null -> ClawdRenderer.dance(t, m.energy, m.bounce)
                 else -> ClawdRenderer.awake(t)
             }
+            if (s != null && s.done()) scene = null
             hs.setBytes(PROGRAM_SIZE, ClawdRenderer.rgb565(frame))
             if (first) {
                 hs.seedIndex(nextIndex)
@@ -191,7 +195,7 @@ class Streamer(
                     }
                 }
                 val m = music
-                if (m != null || live) {         // LIVE: render + diff-stream
+                if (m != null || live || scene != null) {  // LIVE: render + diff-stream
                     liveLoop()
                     current = ""                 // re-intro on return to baked
                     continue

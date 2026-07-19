@@ -37,12 +37,47 @@ object Host {
     var onStatus: (String) -> Unit = {}
     var onHosting: () -> Unit = {}
 
+    /** raw-traffic capture for touch-protocol reverse engineering:
+     *  adb logcat -s clawd-capture   (toggled by long-press on status) */
+    @Volatile var captureRaw = false
+
+    /** decoded touch stream, dispatched on the keeper thread */
+    val touchListeners =
+        java.util.concurrent.CopyOnWriteArrayList<(TouchEvent) -> Unit>()
+
     private var midi: MidiManager? = null
     private var handler: Handler? = null
     private var appCtx: Context? = null
     private var connecting = false
     private var retryDelay = 1000L
     private var lastTouch = 0L
+    @Volatile private var sawRealTouch = false
+
+    // gesture classification, keeper thread only; output goes to the scene
+    private val gestures = GestureEngine { g -> streamer?.scene?.onGesture(g) }
+    private var gestureTicking = false
+    private val gestureTick = object : Runnable {
+        override fun run() {
+            if (streamer?.scene != null) {
+                gestures.tick(System.currentTimeMillis())
+                handler?.postDelayed(this, 80)
+            } else gestureTicking = false
+        }
+    }
+
+    /** hand the glass to a scene (null = give it back). Any thread. */
+    fun setScene(s: Scene?) {
+        val h = handler
+        if (h == null) { streamer?.scene = s; return }
+        h.post {
+            gestures.reset()
+            streamer?.scene = s
+            if (s != null && !gestureTicking) {
+                gestureTicking = true
+                h.post(gestureTick)
+            }
+        }
+    }
 
     fun say(msg: String) {
         lastStatus = msg
@@ -56,6 +91,7 @@ object Host {
         midi = appCtx!!.getSystemService(Context.MIDI_SERVICE) as MidiManager
         val ht = HandlerThread("clawd-keeper").apply { start() }
         handler = Handler(ht.looper)
+        handler?.post { ClawdState.load(appCtx!!) }  // saver binds keeper looper
         midi!!.registerDeviceCallback(object : MidiManager.DeviceCallback() {
             override fun onDeviceAdded(info: MidiDeviceInfo) {
                 say("block appeared — connecting")
@@ -121,15 +157,23 @@ object Host {
                 reconnect()
                 return@openDevice
             }
-            val asm = SysexAssembler { sysex ->
-                Blocks.decode(sysex, blocks)
-                if (Touch.isTouchStart(sysex)) {
-                    val now = System.currentTimeMillis()
-                    val double = now - lastTouch < 600
-                    lastTouch = now
-                    streamer?.play(if (double) "jump" else "wave")
+            val asm = SysexAssembler({ sysex ->
+                if (captureRaw)
+                    android.util.Log.i("clawd-capture", hex(sysex))
+                // decode on the MIDI binder thread; hop to the keeper
+                // thread so consumers see a single-threaded touch stream
+                Blocks.decode(sysex, blocks) { ev ->
+                    handler?.post { dispatchTouch(ev) }
                 }
-            }
+                // legacy probabilistic tap (timestamp-byte coincidence) —
+                // only until the real decoder proves itself on this block
+                if (!sawRealTouch && Touch.isTouchStart(sysex)) tapReaction()
+            }, onStray = { b ->
+                if (captureRaw)
+                    android.util.Log.i("clawd-capture", "midi:%02X".format(b))
+                else
+                    android.util.Log.i("clawdpad-midi", "%02X".format(b))
+            })
             device.openOutputPort(0)?.connect(
                 object : android.media.midi.MidiReceiver() {
                     override fun onSend(msg: ByteArray, off: Int, len: Int,
@@ -155,7 +199,36 @@ object Host {
         wantHosting = false
         streamer?.quit()
         streamer = null
+        ClawdState.saveNow()
         say("stopped")
+    }
+
+    private fun hex(bytes: ByteArray): String {
+        val sb = StringBuilder(bytes.size * 3)
+        for (b in bytes) sb.append("%02X ".format(b))
+        return sb.toString().trimEnd()
+    }
+
+    /** keeper thread only */
+    private fun dispatchTouch(ev: TouchEvent) {
+        if (!sawRealTouch) {
+            sawRealTouch = true
+            say("real touch decode confirmed 🎯")
+        }
+        val scene = streamer?.scene
+        if (scene != null) {
+            scene.onTouch(ev)
+            gestures.feed(ev)
+        } else if (ev.phase == TouchPhase.START) tapReaction()
+        for (l in touchListeners) l(ev)
+    }
+
+    private fun tapReaction() {
+        if (streamer?.scene != null) return   // a scene owns the pad
+        val now = System.currentTimeMillis()
+        val double = now - lastTouch < 600
+        lastTouch = now
+        streamer?.play(if (double) "jump" else "wave")
     }
 }
 

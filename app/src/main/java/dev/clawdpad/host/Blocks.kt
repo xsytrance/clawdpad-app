@@ -20,6 +20,16 @@ object Blocks {
     private const val BATTERY_CHARGING = 1
     private const val CONNECTOR_PORT = 5
 
+    // Touch message layout (juce BLOCKS protocol, PROVISIONAL until
+    // verified against touch-capture.txt — see TouchDecodeTest):
+    // timestampOffset(5) touchIndex(5) x(12) y(12) z(8) [velocity(8)]
+    private const val TS_OFFSET = 5
+    private const val TOUCH_INDEX = 5
+    private const val TOUCH_XY = 12
+    private const val TOUCH_Z = 8
+    private const val TOUCH_VELOCITY = 8
+    private const val TOUCH_BITS = TS_OFFSET + TOUCH_INDEX + 2 * TOUCH_XY + TOUCH_Z
+
     class State {
         @Volatile var lastAck = -1
         @Volatile var lastAckAt = 0L
@@ -30,8 +40,10 @@ object Blocks {
         val devices = java.util.concurrent.CopyOnWriteArrayList<Triple<Int, String, Int>>()
     }
 
-    /** Decode one device→host SysEx; update state; return events (tests). */
-    fun decode(sysex: ByteArray, st: State): List<String> {
+    /** Decode one device→host SysEx; update state; return events (tests).
+     *  onTouch (optional) receives scaled TouchEvents for 0x10..0x15. */
+    fun decode(sysex: ByteArray, st: State,
+               onTouch: ((TouchEvent) -> Unit)? = null): List<String> {
         val events = mutableListOf<String>()
         if (sysex.size < 8) return events
         val hdr = Protocol.SYSEX_HEADER
@@ -48,9 +60,9 @@ object Blocks {
         var bitsRead = 0
         fun read(n: Int): Int { bitsRead += n; return r.readBits(n) }
         if (totalBits < PACKET_TIMESTAMP) return events
-        read(PACKET_TIMESTAMP)   // timestamp (unused)
+        val timestamp = read(PACKET_TIMESTAMP).toLong() and 0xFFFFFFFFL
         loop@ while (totalBits - bitsRead >= MESSAGE_TYPE) {
-            when (read(MESSAGE_TYPE)) {
+            when (val type = read(MESSAGE_TYPE)) {
                 0 -> break@loop
                 0x02 -> {                                    // PACKET_ACK
                     if (totalBits - bitsRead < PACKET_COUNTER) break@loop
@@ -93,6 +105,37 @@ object Blocks {
                 0x05 -> {                                    // TOPOLOGY_END
                     read(PROTOCOL_VERSION_BITS)
                     events.add("topo_end")
+                }
+                in 0x10..0x15 -> {                           // TOUCH
+                    val withVel = type >= 0x13
+                    val need = TOUCH_BITS + if (withVel) TOUCH_VELOCITY else 0
+                    if (totalBits - bitsRead < need) break@loop
+                    val tsOff = read(TS_OFFSET)
+                    val idx = read(TOUCH_INDEX)
+                    val rx = read(TOUCH_XY)
+                    val ry = read(TOUCH_XY)
+                    val rz = read(TOUCH_Z)
+                    val rv = if (withVel) read(TOUCH_VELOCITY) else 0
+                    val phase = when (type % 3) {
+                        1 -> TouchPhase.START      // 0x10, 0x13
+                        2 -> TouchPhase.MOVE       // 0x11, 0x14
+                        else -> TouchPhase.END     // 0x12, 0x15
+                    }
+                    val name = when (phase) {
+                        TouchPhase.START -> "start"
+                        TouchPhase.MOVE -> "move"
+                        TouchPhase.END -> "end"
+                    }
+                    events.add("touch:$name:$idx:$rx:$ry:$rz:$rv")
+                    onTouch?.invoke(TouchEvent(
+                        touchIndex = idx,
+                        x = rx * 15f / 4096f,
+                        y = ry * 15f / 4096f,
+                        z = rz / 255f,
+                        velocity = rv / 255f,
+                        phase = phase,
+                        deviceTimeMs = timestamp + tsOff,
+                        hostTimeMs = System.currentTimeMillis()))
                 }
                 0x06 -> {                                    // DEVICE_VERSION
                     val idx = read(TOPOLOGY_INDEX)

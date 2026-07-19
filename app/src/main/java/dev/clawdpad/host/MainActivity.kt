@@ -46,6 +46,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var portrait: ClawdView
     private lateinit var danceCard: LinearLayout
     private lateinit var robeShelf: LinearLayout
+    private lateinit var statsLine: TextView
+    private lateinit var battleLog: TextView
     private val robeTabs = HashMap<String, TextView>()
     private var robeCat = "prop"
 
@@ -99,6 +101,15 @@ class MainActivity : AppCompatActivity() {
             textSize = 14f
             setTextColor(DIM)
             setPadding(0, dp(6), 0, dp(14))
+            // dev rig: long-press toggles raw MIDI capture for the touch
+            // protocol work — adb logcat -s clawd-capture
+            setOnLongClickListener {
+                Host.captureRaw = !Host.captureRaw
+                say(if (Host.captureRaw)
+                    "🎙 capture ON — adb logcat -s clawd-capture"
+                    else "capture off")
+                true
+            }
         }
         root.addView(status)
 
@@ -109,6 +120,19 @@ class MainActivity : AppCompatActivity() {
             setPadding(dp(14), dp(14), dp(14), dp(14))
         }
         portrait = ClawdView(this)
+        // dev rig: long-press the portrait toggles finger-paint on the
+        // block — end-to-end proof of the touch pipeline
+        portrait.setOnLongClickListener {
+            val cur = Host.streamer?.scene
+            if (cur is PaintScene) {
+                cur.stop()
+                say("paint over — back to his life")
+            } else {
+                Host.setScene(PaintScene())
+                say("🎨 finger-paint — touch the block, watch it glow")
+            }
+            true
+        }
         frame.addView(portrait, LinearLayout.LayoutParams(dp(240), dp(240)))
         root.addView(frame, LinearLayout.LayoutParams(
             LinearLayout.LayoutParams.MATCH_PARENT,
@@ -215,6 +239,100 @@ class MainActivity : AppCompatActivity() {
             addView(robeShelf)
         })
         populateRobe()
+
+        // ── TRAIN & BATTLE: raise him, then let him fight ────────────
+        root.addView(TextView(this).apply {
+            text = "TRAIN & BATTLE"
+            textSize = 12f; letterSpacing = 0.18f
+            setTextColor(DIM); setPadding(dp(4), dp(18), 0, dp(4))
+        })
+        statsLine = TextView(this).apply {
+            textSize = 13f
+            setTextColor(INK)
+            setPadding(dp(4), 0, 0, dp(8))
+        }
+        root.addView(statsLine)
+
+        val bgrid = GridLayout(this).apply { columnCount = 2 }
+        fun bcard(emoji: String, label: String, onTap: () -> Unit) {
+            val c = LinearLayout(this).apply {
+                orientation = LinearLayout.VERTICAL
+                gravity = Gravity.CENTER
+                background = rounded(CARD, BORDER, 22)
+                setPadding(0, dp(16), 0, dp(14))
+                pressable { sounds?.play("boop", 0.4f); onTap() }
+            }
+            c.addView(TextView(this).apply {
+                text = emoji; textSize = 30f; gravity = Gravity.CENTER
+            })
+            c.addView(TextView(this).apply {
+                text = label; textSize = 14f
+                setTextColor(INK); gravity = Gravity.CENTER
+                setPadding(0, dp(4), 0, 0)
+            })
+            bgrid.addView(c, GridLayout.LayoutParams().apply {
+                width = 0
+                columnSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f)
+                setMargins(dp(4), dp(4), dp(4), dp(4))
+            })
+        }
+        bcard("⚔️", "battle") { startBattle(shadow = false) }
+        bcard("🌙", "shadow match") { startBattle(shadow = true) }
+        root.addView(bgrid)
+
+        // training shelf: one mini-game per stat
+        val trainShelf = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+        }
+        fun tcard(emoji: String, label: String, make: () -> MiniGame) {
+            val c = LinearLayout(this).apply {
+                orientation = LinearLayout.VERTICAL
+                gravity = Gravity.CENTER
+                background = rounded(CARD, BORDER, 20)
+                setPadding(dp(16), dp(12), dp(16), dp(10))
+                pressable {
+                    sounds?.play("boop", 0.4f)
+                    startGame("$emoji $label — on the block!", make())
+                }
+            }
+            c.addView(TextView(this).apply {
+                text = emoji; textSize = 26f; gravity = Gravity.CENTER
+            })
+            c.addView(TextView(this).apply {
+                text = label; textSize = 12f
+                setTextColor(INK); gravity = Gravity.CENTER
+                setPadding(0, dp(3), 0, 0)
+            })
+            trainShelf.addView(c, LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT).apply {
+                rightMargin = dp(8)
+            })
+        }
+        tcard("🥊", "strike") { StrikeTarget(trainingEnd("power")) }
+        tcard("🛡", "steady") { HoldSteady(trainingEnd("guard")) }
+        tcard("🎯", "chase") { ChaseDot(trainingEnd("finesse")) }
+        tcard("🥁", "rhythm") { RhythmTaps(trainingEnd("stamina")) }
+        root.addView(android.widget.HorizontalScrollView(this).apply {
+            isHorizontalScrollBarEnabled = false
+            addView(trainShelf)
+            setPadding(0, dp(4), 0, 0)
+        })
+
+        battleLog = TextView(this).apply {
+            textSize = 12f
+            setTextColor(DIM)
+            typeface = Typeface.MONOSPACE
+            background = rounded(CARD, BORDER, 14)
+            setPadding(dp(12), dp(8), dp(12), dp(8))
+            visibility = View.GONE
+        }
+        root.addView(battleLog, LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT).apply {
+            topMargin = dp(8)
+        })
+        refreshStats()
 
         // ── message / art mode: put words on the glass ──────────────
         root.addView(TextView(this).apply {
@@ -346,6 +464,70 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun refreshStats() = runOnUiThread {
+        val s = ClawdState.stats
+        statsLine.text = "Lv ${s.level} · ${s.xp} XP · " +
+            "P${s.power} G${s.guard} F${s.finesse} S${s.stamina} · " +
+            "style: ${ClawdState.style.experience} moves learned"
+    }
+
+    /** shared end-of-round handler for the training mini-games */
+    private fun trainingEnd(stat: String): (Int, Int, Boolean) -> Unit =
+        { score, xp, leveled ->
+            runOnUiThread {
+                if (leveled) {
+                    sounds?.play("jingle")
+                    say("🎉 $stat LEVEL UP! score $score, +$xp xp")
+                } else say("scored $score → +$xp $stat xp")
+                refreshStats()
+            }
+        }
+
+    private fun startGame(label: String, game: MiniGame) {
+        if (Host.streamer == null) {
+            say("connect his block first — the games live on the glass")
+            return
+        }
+        Host.setScene(game)
+        setMode("awake")
+        say(label)
+    }
+
+    private fun startBattle(shadow: Boolean) {
+        if (Host.streamer == null) {
+            say("connect his block first — the arena is the glass")
+            return
+        }
+        // tapping again mid-fight throws the towel
+        (Host.streamer?.scene as? BattleScene)?.let {
+            it.abort()
+            battleLog.visibility = View.GONE
+            say("fight called off")
+            return
+        }
+        val rival = Ladder.next(ClawdState.stats.level)
+        runOnUiThread { battleLog.text = ""; battleLog.visibility = View.VISIBLE }
+        val log: (String) -> Unit = { line ->
+            runOnUiThread { battleLog.append("$line\n") }
+        }
+        val over: (Boolean) -> Unit = { leftWon ->
+            runOnUiThread {
+                if (leftWon) sounds?.play("jingle") else sounds?.play("chime")
+                say(if (leftWon) "🏆 ${rival.name} is down!"
+                    else "${rival.emoji} ${rival.name} took this one — train up")
+                refreshStats()
+            }
+        }
+        val scene = if (shadow) BattleScene.shadow(rival, onLog = log, onOver = over)
+                    else BattleScene.versus(rival, onLog = log, onOver = over)
+        Host.setScene(scene)
+        setMode("awake")
+        say(if (shadow)
+            "🌙 shadow match: your clawd vs ${rival.emoji} ${rival.name} — hands off"
+        else
+            "⚔️ vs ${rival.emoji} ${rival.name}: strike to hit · hold to guard · swipe to dodge · scrub to charge")
+    }
+
     private fun say(msg: String) = runOnUiThread {
         status.text = msg
         when {
@@ -423,6 +605,7 @@ class MainActivity : AppCompatActivity() {
     /** the activity always talks to whatever streamer the Host holds */
     private fun streamerBind() {
         streamer = Host.streamer
+        refreshStats()   // cheap; keeps XP/level current after games
         android.os.Handler(mainLooper).postDelayed({ streamerBind() }, 1500)
     }
 
