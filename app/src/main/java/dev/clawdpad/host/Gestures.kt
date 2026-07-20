@@ -3,7 +3,12 @@ package dev.clawdpad.host
 import kotlin.math.atan2
 import kotlin.math.hypot
 import kotlin.math.min
-import kotlin.math.sqrt
+
+/** How far (pad cells) a hold may wander before it counts as "not steady".
+ *  This block reports no continuous pressure, so hold quality is measured
+ *  positionally: a steady guard is a finger that stays put. Kept equal to
+ *  HOLD_MAX_PATH (a hold that drifts its whole movement budget scores ~0). */
+private const val STEADY_SPAN = 1.5f
 
 /**
  * Classified pad gestures with magnitude metrics — the raw material for
@@ -20,10 +25,12 @@ sealed class Gesture {
     data class Strike(val x: Float, val y: Float, val velocity: Float,
                       val zPeak: Float) : Gesture()
 
-    /** sustained press. Emitted with ongoing=true while held (progress),
-     *  once with ongoing=false at release. steadiness 0..1 */
+    /** sustained press = a guard. Emitted with ongoing=true while held
+     *  (progress), once with ongoing=false at release. firmness 0..1 is how
+     *  hard it was set down (landing velocity — this block has no continuous
+     *  pressure); steadiness 0..1 is how little the finger wandered. */
     data class Hold(val x: Float, val y: Float, val durationMs: Long,
-                    val avgZ: Float, val steadiness: Float,
+                    val firmness: Float, val steadiness: Float,
                     val ongoing: Boolean) : Gesture()
 
     /** directional glide. speed in cells/second, angle in degrees
@@ -53,8 +60,8 @@ class GestureEngine(private val onGesture: (Gesture) -> Unit) {
         var winding = 0f              // accumulated turn, degrees
         var lastAngle = Float.NaN     // heading of previous segment
         var sumX = ev.x; var sumY = ev.y
-        // Welford running stats over z
-        var n = 1; var zMean = ev.z; var zM2 = 0f
+        var n = 1
+        var maxWander = 0f            // furthest excursion from the landing point
         var holding = false
 
         fun update(ev: TouchEvent) {
@@ -75,15 +82,14 @@ class GestureEngine(private val onGesture: (Gesture) -> Unit) {
             lastX = ev.x; lastY = ev.y; lastT = ev.deviceTimeMs
             sumX += ev.x; sumY += ev.y
             zPeak = maxOf(zPeak, ev.z)
+            maxWander = maxOf(maxWander, hypot(ev.x - x0, ev.y - y0))
             n++
-            val delta = ev.z - zMean
-            zMean += delta / n
-            zM2 += delta * (ev.z - zMean)
         }
 
         val durationMs: Long get() = lastT - t0
-        val zStdev: Float get() = if (n < 2) 0f else sqrt(zM2 / (n - 1))
-        val steadiness: Float get() = (1f - min(1f, zStdev * 6f))
+        // No continuous pressure on this block, so a "steady" hold is one that
+        // barely moves: full marks until the finger drifts STEADY_SPAN cells.
+        val steadiness: Float get() = 1f - min(1f, maxWander / STEADY_SPAN)
         val displacement: Float get() = hypot(lastX - x0, lastY - y0)
     }
 
@@ -130,7 +136,7 @@ class GestureEngine(private val onGesture: (Gesture) -> Unit) {
             if (tr.durationMs >= HOLD_MIN_MS && tr.pathLen <= HOLD_MAX_PATH) {
                 tr.holding = true
                 onGesture(Gesture.Hold(tr.lastX, tr.lastY, tr.durationMs,
-                    tr.zMean, tr.steadiness, ongoing = true))
+                    tr.zPeak, tr.steadiness, ongoing = true))
             }
         }
     }
@@ -159,7 +165,7 @@ class GestureEngine(private val onGesture: (Gesture) -> Unit) {
             }
             tr.holding ->
                 onGesture(Gesture.Hold(tr.lastX, tr.lastY, dur,
-                    tr.zMean, tr.steadiness, ongoing = false))
+                    tr.zPeak, tr.steadiness, ongoing = false))
             d <= TAP_MAX_DIST && dur <= TAP_MAX_MS ->
                 onGesture(Gesture.Tap(tr.x0, tr.y0, tr.zPeak))
             // anything else: an indecisive smudge — stay quiet

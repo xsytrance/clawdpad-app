@@ -89,6 +89,33 @@ class GestureEngineTest {
     }
 
     @Test
+    fun wanderingHoldIsNotSteady() {
+        // With no continuous pressure, steadiness is positional: a finger that
+        // drifts across the pad while held must score LOW steadiness.
+        // drift ~1.4 cells — still within the hold movement budget, but it
+        // uses nearly all of it, so steadiness should be low.
+        val (eng, out) = collect()
+        eng.feed(ev(TouchPhase.START, 5f, 5f, 0.6f, 0))
+        eng.feed(ev(TouchPhase.MOVE, 6f, 6f, 0f, 450))
+        eng.tick(450)
+        val hold = out.filterIsInstance<Gesture.Hold>().first()
+        assertTrue("steadiness ${hold.steadiness}", hold.steadiness < 0.4f)
+    }
+
+    @Test
+    fun holdFirmnessIsLandingVelocityNotMovePressure() {
+        // Real moves carry z=0 (no pressure); firmness must come from the
+        // landing velocity captured at START, not decay to zero over the hold.
+        val (eng, out) = collect()
+        eng.feed(ev(TouchPhase.START, 5f, 5f, 0.75f, 0))
+        eng.feed(ev(TouchPhase.MOVE, 5.05f, 5f, 0f, 450))
+        eng.tick(450)
+        val hold = out.filterIsInstance<Gesture.Hold>().first()
+        assertEquals(0.75f, hold.firmness, 0.01f)
+        assertTrue("steadiness ${hold.steadiness}", hold.steadiness > 0.9f)
+    }
+
+    @Test
     fun quickLightTouchIsTap() {
         val (eng, out) = collect()
         eng.feed(ev(TouchPhase.START, 3f, 9f, 0.4f, 0))

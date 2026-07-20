@@ -209,15 +209,20 @@ class HoldSteady(onEnd: (Int, Int, Boolean) -> Unit = { _, _, _ -> }) :
     MiniGame("guard", xpPerPoint = 1f, onEnd = onEnd) {
 
     private val tracker = BandTracker()
-    @Volatile private var z = -1f       // current pressure, -1 = not touching
+    // This block reports no continuous pressure, so "hold steady" is a
+    // POSITION game: keep your finger at the drifting target HEIGHT and hold
+    // it there. `level` is normalised finger height (top of pad = 1),
+    // -1 = not touching.
+    @Volatile private var level = -1f
     private var lastT = -1.0
     private var scored = 0
 
     override fun onTouch(ev: TouchEvent) {
-        z = if (ev.phase == TouchPhase.END) -1f else ev.z
+        level = if (ev.phase == TouchPhase.END) -1f
+                else (1f - ev.y / 15f).coerceIn(0f, 1f)
     }
 
-    /** target band center drifts slowly: keep 0.3..0.8 pressure */
+    /** target band center drifts slowly: keep your finger at 0.3..0.8 height */
     internal fun bandCenter(tPlay: Double): Float =
         (0.55 + 0.25 * sin(tPlay * 2 * PI / 11)).toFloat()
 
@@ -225,14 +230,14 @@ class HoldSteady(onEnd: (Int, Int, Boolean) -> Unit = { _, _, _ -> }) :
         val dt = if (lastT < 0) 0L else ((tPlay - lastT) * 1000).toLong()
         lastT = tPlay
         val center = bandCenter(tPlay)
-        val cur = z
+        val cur = level
         if (cur >= 0 && dt > 0) {
             tracker.update(cur, center, dt)
-            // 1 point per ~600ms in band
+            // 1 point per ~600ms held on the target line
             val target = (tracker.inBandMs / 600).toInt()
             while (scored < target) { addScore(1); scored++ }
         }
-        // gauge: pressure 0..1 maps bottom→top over rows 13..1
+        // gauge: height 0..1 maps bottom→top over rows 13..1
         fun rowFor(v: Float) = (13 - v * 12).toInt().coerceIn(1, 13)
         val bandTop = rowFor(center + 0.12f)
         val bandBot = rowFor(center - 0.12f)

@@ -50,9 +50,14 @@ then 1+ touch groups:
 - **touchIndex**: header `0x20`→finger 0, `0x40`→finger 1, `0x60`→finger 2.
 - **No continuous pressure (z)** exists in this mode. Velocity is present only on
   start/end and is surfaced as `TouchEvent.z` so gameplay keeps a strike-strength
-  signal (`z == 0` on plain moves).
-- Multitouch packs repeated groups in one message; the decoder loops while the
-  next 7 bits read as a valid touch type. Single-touch is the common path.
+  signal (`z == 0` on plain moves). See §4 for how gameplay adapts.
+- **Multitouch** packs extra fingers as consecutive `02 <finger>` groups in one
+  message, but the **type byte appears only on the first group** (and there is a
+  per-group trailer whose bit width isn't yet pinned down). The decoder therefore
+  reliably yields **finger 0 and stops cleanly**; trailing fingers are dropped,
+  not mis-decoded (regression-pinned in `realConcatenatedMultitouchDecodesFirstFingerSafely`).
+  Full multi-finger support needs a dedicated two-finger capture ritual on hardware.
+  Single-touch — the common path for all current gameplay — is fully decoded.
 
 ### The bug this replaced
 The provisional layout was `tsOff(5) idx(5) x(12) y(12) z(8) [vel(8)]`. Two errors:
@@ -74,7 +79,26 @@ Decoded left→right x, top→bottom y (0..4095). Each lands in the correct quad
 
 Full SysEx for each is asserted in `TouchDecodeTest.realCornersLandInCorrectQuadrants`.
 
-## 4. The capture ritual (how to re-verify / extend)
+## 4. Gameplay adaptation to no-pressure hardware
+
+Because this block reports no continuous pressure, two features were reframed
+around what it *does* give — position, timing, and landing velocity:
+
+- **`Gesture.Hold`** (guard): `steadiness` is now **positional** — full marks until
+  the finger drifts `STEADY_SPAN` (== `HOLD_MAX_PATH`, 1.5 cells) from where it
+  landed. `firmness` (was `avgZ`) is the **landing velocity** (`zPeak`), i.e. how
+  hard the guard was set, since moves carry `z == 0`. Feeds battle guard strength
+  (`Battle.holdMagnitude`), style learning (`ClawdState` HOLD channel), and the
+  guard training game.
+- **`HoldSteady`** training game: the dead pressure gauge became a **height** gauge —
+  "hold your finger on the drifting target line and keep it there." Reuses the
+  tested `BandTracker` scoring verbatim; it just tracks normalised finger height
+  (`1 - y/15`) instead of pressure.
+
+Pinned by `GestureEngineTest.wanderingHoldIsNotSteady` /
+`holdFirmnessIsLandingVelocityNotMovePressure`.
+
+## 5. The capture ritual (how to re-verify / extend)
 
 1. Host the block in the app; confirm `mInputPortOpen=[true]` via `adb shell dumpsys midi`.
 2. Turn on raw capture — either tap the visible **🎙 capture** button, or from adb:
@@ -91,7 +115,7 @@ Full SysEx for each is asserted in `TouchDecodeTest.realCornersLandInCorrectQuad
 6. Add real vectors to `TouchDecodeTest.kt`; keep the raw log in
    `app/src/test/resources/touch-capture.txt`.
 
-## 5. Build / install / dev rig
+## 6. Build / install / dev rig
 
 - No `gradlew`/`java` on PATH. Build with the borrowed Android Studio JDK + wrapper gradle:
   ```
@@ -100,4 +124,4 @@ Full SysEx for each is asserted in `TouchDecodeTest.realCornersLandInCorrectQuad
   ```
 - SDK / adb: `/home/xsyprime/Android/Sdk/platform-tools`. `local.properties` → SDK path.
 - Verified building & installing on a Pixel 10 Pro XL and a Pixel 8 (`shiba`);
-  40/40 unit tests pass.
+  43/43 unit tests pass.

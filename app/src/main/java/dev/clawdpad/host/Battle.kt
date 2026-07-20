@@ -52,7 +52,7 @@ class GestureCombatant(
             is Gesture.Strike -> queue.add(Action(Move.STRIKE, g.velocity))
             is Gesture.Hold -> {
                 holdOngoing = g.ongoing
-                holdMagnitude = (g.avgZ * 0.5f + g.steadiness * 0.5f)
+                holdMagnitude = (g.firmness * 0.5f + g.steadiness * 0.5f)
             }
             is Gesture.Swipe ->
                 queue.add(Action(Move.DASH, (g.speed / 60f).coerceIn(0.1f, 1f)))

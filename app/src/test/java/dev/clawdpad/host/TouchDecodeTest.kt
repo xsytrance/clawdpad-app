@@ -119,6 +119,22 @@ class TouchDecodeTest {
     }
 
     @Test
+    fun realConcatenatedMultitouchDecodesFirstFingerSafely() {
+        // Real two-finger MOVE captured from hardware: extra fingers pack as
+        // consecutive `02 <finger>` groups WITHOUT repeating the type byte.
+        // Full multi-finger parsing needs a dedicated capture (see
+        // docs/lightpad-touch-protocol.md §2); today we decode finger 0 and
+        // stop cleanly rather than emit garbage for the trailing groups.
+        val sysex = hexPacket(
+            "F0 00 21 10 77 49 00 00 00 00 10 02 04 08 31 48 7A 1F " +
+            "02 08 4B 70 5B 43 07 2B F7")
+        val ev = mutableListOf<TouchEvent>()
+        val got = Blocks.decode(sysex, Blocks.State()) { ev.add(it) }
+        assertEquals(listOf("touch:move:0:2184:1313:0"), got)
+        assertEquals(0, ev.single().touchIndex)
+    }
+
+    @Test
     fun touchThenAckBothDecode() {
         val st = Blocks.State()
         val sysex = packet {
