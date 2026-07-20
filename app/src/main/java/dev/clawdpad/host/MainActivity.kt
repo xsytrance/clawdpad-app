@@ -42,6 +42,8 @@ class MainActivity : AppCompatActivity() {
     @Volatile private var connecting = false
 
     private lateinit var status: TextView
+    private lateinit var captureBtn: TextView
+    private var captureReceiver: android.content.BroadcastReceiver? = null
     private lateinit var dot: View
     private lateinit var portrait: ClawdView
     private lateinit var danceCard: LinearLayout
@@ -112,6 +114,23 @@ class MainActivity : AppCompatActivity() {
             }
         }
         root.addView(status)
+
+        // ── dev rig: raw-MIDI capture toggle (touch-protocol work) ────
+        // a plain, obvious button — the long-press hook was invisible
+        // because a status update overwrote its confirmation instantly.
+        // Also driveable over adb:
+        //   adb shell am broadcast -a dev.clawdpad.CAPTURE --ez on true
+        captureBtn = TextView(this).apply {
+            textSize = 13f
+            gravity = Gravity.CENTER
+            typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
+            setPadding(dp(14), dp(9), dp(14), dp(9))
+            pressable { setCapture(!Host.captureRaw) }
+        }
+        root.addView(captureBtn, LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.WRAP_CONTENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT).apply { bottomMargin = dp(12) })
+        renderCaptureBtn()
 
         // ── the portrait: Clawd lives here too ───────────────────────
         val frame = LinearLayout(this).apply {
@@ -384,6 +403,23 @@ class MainActivity : AppCompatActivity() {
         })
         sounds = Sounds(this)
 
+        // dev rig: let adb flip capture without touching the screen
+        //   adb shell am broadcast -a dev.clawdpad.CAPTURE --ez on true
+        captureReceiver = object : android.content.BroadcastReceiver() {
+            override fun onReceive(c: android.content.Context?,
+                                   i: android.content.Intent?) {
+                setCapture(i?.getBooleanExtra("on", !Host.captureRaw)
+                    ?: !Host.captureRaw)
+            }
+        }
+        val capFilter = android.content.IntentFilter("dev.clawdpad.CAPTURE")
+        if (android.os.Build.VERSION.SDK_INT >= 33)
+            registerReceiver(captureReceiver, capFilter,
+                android.content.Context.RECEIVER_EXPORTED)
+        else
+            @Suppress("UnspecifiedRegisterReceiverFlag")
+            registerReceiver(captureReceiver, capFilter)
+
         // the Host service owns discovery, connection, and resurrection
         android.os.Handler(mainLooper).postDelayed({ connect() }, 500)
     }
@@ -406,6 +442,21 @@ class MainActivity : AppCompatActivity() {
             }
             true
         }
+    }
+
+    /** flip raw-MIDI capture, keep the button + status in sync */
+    private fun setCapture(on: Boolean) {
+        Host.captureRaw = on
+        renderCaptureBtn()
+        say(if (on) "🎙 capture ON — adb logcat -s clawd-capture"
+            else "capture off")
+    }
+
+    private fun renderCaptureBtn() = runOnUiThread {
+        val on = Host.captureRaw
+        captureBtn.text = if (on) "🎙 capture: ON" else "🎙 capture: off"
+        captureBtn.setTextColor(if (on) BG else DIM)
+        captureBtn.background = rounded(if (on) CORAL else CARD, BORDER, 16)
     }
 
     private fun setDot(color: Int) = runOnUiThread {
@@ -614,6 +665,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         musicMode?.stop()   // ears die with the UI; the HOST lives on —
+        captureReceiver?.let { runCatching { unregisterReceiver(it) } }
         super.onDestroy()   // Clawd survives the app closing, by design
     }
 }

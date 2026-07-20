@@ -20,15 +20,16 @@ object Blocks {
     private const val BATTERY_CHARGING = 1
     private const val CONNECTOR_PORT = 5
 
-    // Touch message layout (juce BLOCKS protocol, PROVISIONAL until
-    // verified against touch-capture.txt — see TouchDecodeTest):
-    // timestampOffset(5) touchIndex(5) x(12) y(12) z(8) [velocity(8)]
-    private const val TS_OFFSET = 5
-    private const val TOUCH_INDEX = 5
+    // Touch message layout — VERIFIED against real Lightpad Block XC5G
+    // traffic captured 2026-07-20 (see TouchDecodeTest golden vectors):
+    //   header(10)  x(12)  y(12)  [velocity(8) on start/end]
+    // header>>5 is (touchIndex+1): 0x20→finger0, 0x40→finger1, 0x60→finger2.
+    // There is NO continuous-pressure (z) field in this mode; velocity is
+    // present only on start/end. Left→right = x 0..4095, top→bottom = y.
+    private const val TOUCH_HEADER = 10
     private const val TOUCH_XY = 12
-    private const val TOUCH_Z = 8
     private const val TOUCH_VELOCITY = 8
-    private const val TOUCH_BITS = TS_OFFSET + TOUCH_INDEX + 2 * TOUCH_XY + TOUCH_Z
+    private const val TOUCH_BITS = TOUCH_HEADER + 2 * TOUCH_XY
 
     class State {
         @Volatile var lastAck = -1
@@ -107,14 +108,15 @@ object Blocks {
                     events.add("topo_end")
                 }
                 in 0x10..0x15 -> {                           // TOUCH
+                    // start/end (0x13/0x15) carry a trailing velocity byte;
+                    // plain move (0x11) does not.
                     val withVel = type >= 0x13
                     val need = TOUCH_BITS + if (withVel) TOUCH_VELOCITY else 0
                     if (totalBits - bitsRead < need) break@loop
-                    val tsOff = read(TS_OFFSET)
-                    val idx = read(TOUCH_INDEX)
+                    val header = read(TOUCH_HEADER)
+                    val idx = ((header ushr 5) - 1).coerceAtLeast(0)
                     val rx = read(TOUCH_XY)
                     val ry = read(TOUCH_XY)
-                    val rz = read(TOUCH_Z)
                     val rv = if (withVel) read(TOUCH_VELOCITY) else 0
                     val phase = when (type % 3) {
                         1 -> TouchPhase.START      // 0x10, 0x13
@@ -126,15 +128,18 @@ object Blocks {
                         TouchPhase.MOVE -> "move"
                         TouchPhase.END -> "end"
                     }
-                    events.add("touch:$name:$idx:$rx:$ry:$rz:$rv")
+                    events.add("touch:$name:$idx:$rx:$ry:$rv")
                     onTouch?.invoke(TouchEvent(
                         touchIndex = idx,
                         x = rx * 15f / 4096f,
                         y = ry * 15f / 4096f,
-                        z = rz / 255f,
+                        // no continuous pressure in this mode: expose the
+                        // start/end strike velocity as z so gameplay still
+                        // gets a "how hard" signal (0 on plain moves).
+                        z = rv / 255f,
                         velocity = rv / 255f,
                         phase = phase,
-                        deviceTimeMs = timestamp + tsOff,
+                        deviceTimeMs = timestamp,
                         hostTimeMs = System.currentTimeMillis()))
                 }
                 0x06 -> {                                    // DEVICE_VERSION
