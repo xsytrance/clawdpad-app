@@ -10,6 +10,10 @@ interface Scene {
     /** produce a 15x15 RGB888 frame; t = seconds since the scene started */
     fun render(t: Double): ByteArray
 
+    /** optional second-block frame (CLAWD COMBAT: fighter B on the snapped-on
+     *  block). null = mirror the primary frame. */
+    fun renderSecond(t: Double): ByteArray? = null
+
     /** raw decoded touch sample (keeper thread) */
     fun onTouch(ev: TouchEvent) {}
 

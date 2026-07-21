@@ -610,14 +610,16 @@ class MainActivity : AppCompatActivity() {
     private fun onBlocksSnap(snapped: Boolean, secondIdx: Int) {
         if (Host.streamer == null) return
         if (snapped) {
-            if (Host.streamer?.scene is FightScene) return   // already brawling
+            Host.streamer?.secondIdx = secondIdx              // relay to block 2
+            if (Host.streamer?.scene is FightScene) return    // already brawling
             val k = Fighters.byId(selectedFighter)
-            Host.setScene(FightScene(selectedFighter,
+            Host.setScene(FightScene(selectedFighter, twoBlock = true,
                 onLog = { line -> runOnUiThread { say(line) } }))
             setMode("awake")
             sounds?.play("jingle")
             say("🔗 SNAP! ${k.emoji} ${k.name} enters the ring — FIGHT!")
         } else {
+            Host.streamer?.secondIdx = -1
             (Host.streamer?.scene as? FightScene)?.abort()
             say("🔌 blocks apart — fight paused")
         }

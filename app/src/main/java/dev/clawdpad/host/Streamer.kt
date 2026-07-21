@@ -82,6 +82,47 @@ class Streamer(
         port.send(bytes, 0, bytes.size)
     }
 
+    /** CLAWD COMBAT two-block relay: the snapped-on block's device index
+     *  (from topology), or -1 for single-block. Set by the snap handler. */
+    @Volatile var secondIdx = -1
+    private var hs2: HeapStreamer? = null
+    private var idx2 = 1
+    private var block2First = true
+
+    /** send addressed at an explicit device index (0x77 packets only), used
+     *  to reach the second block through the master's relay. */
+    private fun sendTo(bytes: ByteArray, idx: Int) {
+        if (bytes.size > 6 && bytes[0] == 0xF0.toByte() &&
+            bytes[4] == 0x77.toByte())
+            bytes[5] = (idx and 0x3F).toByte()
+        port.send(bytes, 0, bytes.size)
+    }
+
+    /** load our LittleFoot program onto the snapped-on block (idx) via the
+     *  master relay, then arm a HeapStreamer for it. */
+    private fun bootSecond(idx: Int) {
+        val hs = doc.getJSONArray("handshake")
+        // [0] is the global 0x78 enable (not device-scoped); rest are device cmds
+        sendTo(Base64.decode(hs.getString(0), Base64.DEFAULT), idx); sleep(60)
+        for (i in 1 until hs.length()) {
+            sendTo(Base64.decode(hs.getString(i), Base64.DEFAULT), idx); sleep(120)
+        }
+        val begin = Base64.decode(hs.getString(3), Base64.DEFAULT)
+        repeat(6) { sendTo(begin, idx); sleep(120) }
+        idx2 = 1
+        val boot = doc.getJSONArray("boot")
+        for (i in 0 until boot.length()) {
+            var pkt = Base64.decode(boot.getString(i), Base64.DEFAULT)
+            if (pkt.size > 8 && (pkt[6].toInt() and 0x7F) == 0x02) {
+                pkt = renumber(pkt, idx2); idx2 = (idx2 + 1) and 0x3FF
+            }
+            sendTo(pkt, idx); sleep(60)
+        }
+        hs2 = HeapStreamer(idx, idx2).also { it.adoptState() }
+        block2First = true
+        say("relaying to block $idx 🔗")
+    }
+
     private fun pump() {
         val now = System.currentTimeMillis()
         if (now - lastPing >= 300) {
@@ -123,6 +164,25 @@ class Streamer(
             }
             for (pkt in hs.drain()) send(pkt)
             nextIndex = hs.packetIndex
+
+            // ── second block relay: light up the snapped-on block ──
+            val sidx = secondIdx
+            if (sidx >= 0 && s != null) {
+                if (hs2 == null) bootSecond(sidx)
+                val h = hs2
+                if (h != null) {
+                    val frameB = s.renderSecond(t) ?: frame   // null = mirror
+                    h.setBytes(PROGRAM_SIZE, ClawdRenderer.rgb565(frameB))
+                    if (block2First) {
+                        h.seedIndex(idx2); h.markUnknownFrameArea(PROGRAM_SIZE)
+                        block2First = false
+                    }
+                    for (pkt in h.drain()) sendTo(pkt, sidx)
+                    idx2 = h.packetIndex
+                }
+            } else if (sidx < 0 && hs2 != null) {
+                hs2 = null                                     // unsnapped
+            }
             pump()
             sleep(80)   // ~12fps live
         }
