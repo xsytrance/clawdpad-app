@@ -1,99 +1,98 @@
-# POKÉMON VERA — design seed
+# POKÉMON VERA — design seed (MultiVera on the blocks)
 
-A fan/personal Pokémon-like on the Lightpad blocks. The block is your
-creature's physical home: **touch to summon**, it lives on the glass between
-battles, and you **snap blocks together to battle** — 1v1 or, with more blocks
-in the cluster, a **battle royale**. The app can **read your own save data** to
-summon your real team.
+**Corrected framing (2026-07-21).** This is a **MultiVera** app first, a toy
+second. Like Ember (Undertale) and the FFT Vera: read the player's **real save
+data**, normalize it into **SaveTruth**, and let the characters — here, your
+own Pokémon — talk to you **grounded in your actual playthrough**, under the
+covenant **"facts are sacred, feelings are free."** The Lightpad block is a new
+*embodiment* for that engine: your save-aware Pokémon gets a **body** that lives
+on your desk. Battles are the "feelings are free" candy layer, not the point.
 
-Origin: user's idea 2026-07-21 ("Pokémon Vera", alongside Undertale Vera and
-FFT Vera). This builds directly on the CLAWD COMBAT engine (see
-`docs/clawd-combat.md`) — most of the hard infrastructure already exists.
+Fits the MultiVera "add a new game" pattern (see fft-psx-vera
+`GAME_VERA_TEMPLATE.md` / `GAME_VERA_BLUEPRINT.md`): save parser → SaveTruth
+schema → truth-audit endpoint → grounded character prompt → verification gate.
+Product should carry an **original name** (as Undertale's is "Ember"), read
+**your own** saves, bundle **no copyrighted assets** (original pixel
+reinterpretations on the glass = the covenant's "original reinterpretation").
 
 ---
 
-## Why it's a natural fit (what already exists)
+## The four truths (per the blueprint), for Pokémon
 
-| Pokémon Vera needs | We already built (CLAWD COMBAT) |
-|---|---|
-| A creature that lives on the block | Clawd + the part-based creature renderer |
-| Summon / interact by touch | Verified touch decode + gesture engine |
-| Snap blocks → battle | Snap detection via topology (`Host.onSnap`) |
-| Render a creature on a 2nd block | The BLE relay to the snapped-on device index |
-| Creatures roam a shared field | The 30-wide two-block arena + seam-crossing |
-| Battle royale across many blocks | ROLI topology supports up to 6 blocks in a cluster |
-| Faint / K.O. animations | The dismemberment particle system (repurpose as a faint/shatter) |
-| Persisted creatures | The `ClawdState` save pattern |
+1. **Save truth** (sacred, wins): your party & boxes — species, **nickname,
+   level, real moves, IVs/EVs, nature, ability, OT name/ID, shininess, Poké
+   Ball, met location + date, friendship**; badges; Pokédex seen/caught;
+   playtime; money; trainer name/ID; rival name; Hall of Fame; current
+   location; major flags.
+2. **Game-system truth**: type chart, movepools, stat/damage formulas — curated.
+3. **Lore truth**: species identity, professor/rival/gym personas, phase-locked
+   knowledge.
+4. **Conversation truth**: the chat so far.
 
-So the leap from here is mostly **content + data**, not new plumbing.
+If SaveTruth doesn't contain a current-state fact, the model isn't trusted to
+know it. Unknown → `null`; ambiguous → `undetermined`. A **Save Truth Audit**
+panel exposes every parsed fact so hallucinations show up as data-pipeline bugs.
 
-## The core loops
+## Which generation? (the real decision)
 
-1. **Habitat.** Your summoned Pokémon lives on the block like a Tamagotchi —
-   idles, blinks, reacts to touch (pet it = affection, Pokémon-Amie style).
-2. **Summon ritual.** Draw a sigil / do a gesture to summon; it materialises
-   pixel-by-pixel with its cry (the app already has a sound kit). Shiny = a
-   sparkle + alt palette.
-3. **Snap to battle.** Snap a second block → 1v1 across the two-block arena
-   (we have this). Snap N blocks in the cluster → **battle royale**: the
-   topology *connection graph* is the battlefield layout — adjacency decides
-   who can hit whom, and Pokémon roam the multi-block field.
-4. **Moves as gestures.** Each mon's real moveset maps to inputs: swipe =
-   physical, hold-charge = special, draw a shape = signature/Z-move. Type
-   matchups show as color flashes; STAB/super-effective = bigger shake + gore.
-5. **Trade by snapping.** Snap two blocks, run a trade animation — the mon
-   literally **walks across the seam** from one block to the other (arena
-   seam-crossing already works).
+Save-format richness vs. parse difficulty vs. docs — through the "how many
+*sacred facts* can we ground on" lens:
 
-## Read your own save data
+| Gen / platform | Sacred-fact richness | Parse difficulty | Verdict |
+|---|---|---|---|
+| **Gen 1** — R/B/Y (Game Boy) | Thin: species/level/moves/DVs/badges/dex, **no natures, no abilities, no held items** | **Easiest** (flat, well-documented) | Nostalgia + simplest first parse, but least for the voice to grab |
+| **Gen 3** — Ruby/Sapphire/**Emerald**/**FireRed** (GBA) | **Rich**: natures, abilities, real IVs/EVs, moves, met loc+level, friendship, ribbons, PID-shininess, OT | Medium (block-shuffle + section checksums) but **famously documented** (Bulbapedia + PKHeX as reference) | **Recommended.** The sweet spot: max sacred facts, flat emulator `.sav`, low RE risk |
+| **Gen 4/5** — DS | Richest | **Encrypted** per-mon (PRNG + block shuffle) — hardest | Save for later; don't start on the crypto |
 
-Import **your own** save file (like PKHeX does) to summon your actual team:
-nickname, level, real moves, IVs/EVs, nature, and **shiny detection** → shiny
-sprite. Party or box → pick who to summon. Save formats per generation are
-publicly documented (PKHeX is the open-source reference). Get the `.sav` onto
-the phone via a file picker or `adb push`; parse party block → creature stats.
-Scope this as a **personal / fan project over your own saves** — no ROMs, no
-DRM, just reading data you own.
+**Recommendation: start on Gen 3 (GBA), Emerald or FireRed.** It's the "facts
+are sacred, and there are *so many* sacred facts" generation — natures,
+abilities, IVs, met-date, friendship all make your Charizard *specifically
+yours*. Gen 1 is the romantic minimal target (great for a Spark-mode-tier first
+slice) but the voice has less to stand on. DS is richest but the encryption is a
+whole project — earn it later.
 
-## Idea firehose (pick and choose)
+## The block as embodiment (where the hardware earns its place)
 
-- **Nuzlocke mode:** permadeath. A fainted mon *shatters* (reuse the gore
-  particles) and is gone for good — brutal and perfect for the hardware.
-- **Status as LED language:** burn = flickering orange, sleep = slow dim pulse,
-  poison = purple throb, paralysis = jittery stutter, freeze = pale + still.
-- **Raid / gym mode:** one block is the boss den (a big legendary that spans
-  the whole glass), the other blocks are challengers ganging up.
-- **Overworld across blocks:** snap blocks edge-to-edge to build a bigger map
-  to walk a mon around; tall grass encounters flash on a random block.
-- **Day/night + weather** on the glass (rain, sandstorm) affecting moves.
-- **Breeding / eggs:** an egg lives on a block, hop-counts to hatch, cracks
-  open with a reveal animation.
-- **The "Vera" signature:** a custom Vera-starter and/or Vera legendary as the
-  mascot mon, exclusive to this project.
-- **Cry-as-haptics + audio:** each mon's summon/faint has a distinct chirp.
-- **Type-colored aura** around each creature so matchups read at a glance.
+MultiVera has always lived on a screen. The block gives a save-aware character a
+**body** — this is the genuinely new thing:
 
-## The honest hard parts
+- **Embodied SaveTruth.** The creature *is* a truth display: shiny → it
+  shimmers, high friendship → it leans into your touch, its real nature/level
+  shape its idle. You can hold your save's facts in your hand.
+- **The covenant as visual law.** Sacred facts render one way (steady, true);
+  free voice/personality is the expressive animation layer. You can *see* the
+  two-bucket wall.
+- **Petting = the bond**, and it can reference sacred facts ("you caught me at
+  [met location] on [met date] — I remember").
+- **Snap two blocks = two save-aware characters MEET.** Not (only) a battle —
+  a *meeting* of two real SaveTruths: your Pokémon and a friend's (their save),
+  grounded cross-save dialogue. This is the Council / two-phone version.
+- **"Across Your Saves," physical.** Two blocks, two of *your* saves → the same
+  starter speaks to the divergence ("in this file I'm your Champion; in that one
+  you boxed me at level 5"). Two-Save Divergence you can arrange on a table.
+- **Chronicle / Report Card on the glass** — a save-grounded scroll.
+- **Battles / trades** are the free-layer candy, and the CLAWD COMBAT arena
+  (snap → shared field, seam-crossing, gore→faint) is ready to host them — but
+  they *express* the companion, they aren't the product.
 
-- **Sprites.** A pixel mon on 15×15 is tiny; hundreds of species is a lot of
-  art. Start with a handful (your team + the Vera mon), lean on silhouettes +
-  type-color + a couple signature features, add more over time. Procedural
-  "species archetypes" (quadruped, bird, blob, serpent) can cover many.
-- **Battle data.** Type chart, movepools, damage formula, stats — data-heavy
-  but the fan data is public. Ship a small curated set first.
-- **Multi-block (>2).** We've only tested 2 snapped blocks. Battle royale needs
-  the N-device topology parsed (deviceCount + the connection graph, which we
-  already decode) and the relay pointed at *each* block's index. Plumb it for 3
-  before promising 6.
-- **Save parsing.** One generation's format at a time; validate against a known
-  save. Keep it read-only.
+## Reuse from what's built (CLAWD COMBAT)
 
-## Suggested first slice (when we pick this up)
+Snap detection (topology), the BLE relay to a 2nd block, the roaming two-block
+arena + seam-crossing, touch decode + gestures, the creature renderer + particle
+system, ClawdState persistence. The hardware/embodiment plumbing exists; the
+**new work is the MultiVera pipeline**: Gen-3 save parser → SaveTruth →
+truth-audit → grounded chat (phone does text/voice; block is the body).
 
-1. One Vera-starter mon, summonable by gesture, living on one block (habitat).
-2. Snap → 1v1 using the existing arena, with type-colored auras + a real faint
-   (shatter) instead of the training dummy.
-3. Then: import a real save → summon one imported mon into that same loop.
+## First slice (Vera-true)
 
-The engine's already fighting across two blocks — this is the game it was
-secretly always going to become.
+1. Gen-3 `.sav` parser → SaveTruth for the **party** (verified through a truth
+   audit), read-only.
+2. Import a save → **summon one real Pokémon** onto a block (original pixel
+   reinterpretation), idling as an embodied-truth avatar.
+3. **Grounded chat** with it on the phone — it knows its own sacred facts, voice
+   is free — with the audit panel proving every fact.
+4. Then: two blocks → two save-aware creatures *meet* (grounded), and only after
+   that, the optional battle/trade candy.
+
+The verification gate is non-negotiable (parser → storage → prompt → live QA →
+diff/test) — same as every Vera. See fft-psx-vera `GAME_VERA_BLUEPRINT.md`.
