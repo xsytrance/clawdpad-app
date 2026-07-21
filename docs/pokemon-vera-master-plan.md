@@ -18,7 +18,24 @@ data; creative **expression** (dex prose, artwork, names/trademarks) gets
 reinterpreted, never copied.
 
 This is a multi-month build. This document is the map. It supersedes the seed in
-`pokemon-vera-idea.md`.
+`pokemon-vera-idea.md`. The visual layer (every Pokémon on the block, Poké Balls,
+all animations) has its own thorough companion: `pokemon-vera-rendering-plan.md`.
+
+## Locked decisions (2026-07-21)
+
+- **Product / codename: Poképad.**
+- **Target: Gen III** — confirmed (saves + mechanics).
+- **Runtime split (my call): self-contained Kotlin on the phone** — the battle
+  engine, bundled data, and Gen-III save parser run on-device and drive the
+  blocks with **no server** (the toy works on a table, offline). A **separate
+  Python MultiVera backend** handles only the *companion chat* (lore RAG + LLM)
+  and is optional/networked. Rationale: the block battles are the heart and must
+  never depend on wifi; chat is the enrichment layer and fits the existing Vera
+  stack. Clean seam: SaveTruth JSON is the contract both sides share.
+- **Repo: `github.com/xsytrance/pokepad`** (exists, empty). Poképad is built
+  there — the data pipeline, the Kotlin engine/renderer/parser (its own app,
+  carrying over the proven block-hosting from clawdpad-app), and the Python
+  chat backend. These planning docs get copied into it when we scaffold.
 
 ---
 
@@ -209,15 +226,11 @@ check. 4. Live output QA (battle result / character answer) against reference.
 - **M5** Phase 5 grounded companion chat + product name.
 - **M6** Phase 6 depth (royale, gens, human control).
 
-## Decisions needed from Rod
+## Immediate next move
 
-1. **Product name** (the "Ember" of this one).
-2. **Confirm Gen III** as the v1 target (saves + mechanics).
-3. **Companion runtime**: self-contained Kotlin battles on the blocks + a
-   separate Python MultiVera backend for chat — confirm that split (vs. trying
-   to do chat on-device).
-4. **Where the code lives**: extend `clawdpad-app` (blocks/engine) and stand up
-   a `pokemon-vera` repo for the MultiVera backend? Or one monorepo?
-
-Recommended first move once confirmed: **build Phase 1** (the scrape) — it
-unblocks everything and is low-risk.
+All four decisions are locked (see top). First build = **Phase 1, the scrape**,
+in the `pokepad` repo: scaffold the repo, write `tools/build_pokedex.py`
+(PokéAPI → normalized, versioned, offline `gen3` dataset), verify counts +
+spot-checks. It unblocks the engine, the parser, and the renderer, and is
+low-risk. In parallel, **ART-M1** (`CreatureRenderer` + a few archetypes +
+`BallRenderer` + summon/idle/faint) can start so battles get real bodies.
