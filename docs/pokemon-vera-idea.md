@@ -1,5 +1,17 @@
 # POKÉMON VERA — design seed (MultiVera on the blocks)
 
+> **Status 2026-07-21:** first real code landed — an **autonomous Gen-III
+> battle engine** (`Pokemon.kt`: accurate base stats, 17-type chart, Gen-III
+> stat + damage formulas, real moves, physical/special split by type, AI on
+> both sides) and `PokeBattleScene.kt` (a fully autonomous battle across the
+> two snapped blocks — moves fly across the seam, real HP/faint, no human
+> control). Snapping two blocks now runs a real battle between two sample
+> species. 49 unit tests pass (stat formula verified exact: Charizard
+> maxHp 153 / Spe 120). NEXT: feed the combatants from parsed **save data**
+> (the actual Vera pipeline below), and later optional human control.
+
+
+
 **Corrected framing (2026-07-21).** This is a **MultiVera** app first, a toy
 second. Like Ember (Undertale) and the FFT Vera: read the player's **real save
 data**, normalize it into **SaveTruth**, and let the characters — here, your

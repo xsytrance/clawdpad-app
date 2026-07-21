@@ -611,17 +611,23 @@ class MainActivity : AppCompatActivity() {
         if (Host.streamer == null) return
         if (snapped) {
             Host.streamer?.secondIdx = secondIdx              // relay to block 2
-            if (Host.streamer?.scene is FightScene) return    // already brawling
-            val k = Fighters.byId(selectedFighter)
-            Host.setScene(FightScene(selectedFighter, twoBlock = true,
+            if (Host.streamer?.scene is PokeBattleScene) return  // already battling
+            // pick two distinct real species (save data will assign teams later)
+            val rng = java.util.Random()
+            val a = Pokedex.random(rng)
+            var b = Pokedex.random(rng)
+            while (b.id == a.id) b = Pokedex.random(rng)
+            Host.setScene(PokeBattleScene(a.id, b.id,
+                seed = System.currentTimeMillis(),
                 onLog = { line -> runOnUiThread { say(line) } }))
             setMode("awake")
             sounds?.play("jingle")
-            say("🔗 SNAP! ${k.emoji} ${k.name} enters the ring — FIGHT!")
+            say("🔗 SNAP! ${a.name} vs ${b.name} — auto-battle!")
         } else {
             Host.streamer?.secondIdx = -1
+            (Host.streamer?.scene as? PokeBattleScene)?.abort()
             (Host.streamer?.scene as? FightScene)?.abort()
-            say("🔌 blocks apart — fight paused")
+            say("🔌 blocks apart — battle ended")
         }
     }
 
