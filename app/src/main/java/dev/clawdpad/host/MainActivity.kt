@@ -52,6 +52,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var battleLog: TextView
     private val robeTabs = HashMap<String, TextView>()
     private var robeCat = "prop"
+    private var selectedFighter = "clawd"   // CLAWD COMBAT: last-picked fighter
 
     private val BG = Color.parseColor("#171310")
     private val CARD = Color.parseColor("#211B17")
@@ -353,6 +354,46 @@ class MainActivity : AppCompatActivity() {
         })
         refreshStats()
 
+        // ── CLAWD COMBAT: pick a fighter, brawl on the glass ─────────
+        root.addView(TextView(this).apply {
+            text = "CLAWD COMBAT"
+            textSize = 12f; letterSpacing = 0.18f
+            setTextColor(DIM); setPadding(dp(4), dp(18), 0, dp(2))
+        })
+        root.addView(TextView(this).apply {
+            text = "pick your fighter · training mode"
+            textSize = 12f; setTextColor(DIM); setPadding(dp(4), 0, 0, dp(8))
+        })
+        val fightShelf = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+        for (k in Fighters.ROSTER) {
+            val c = LinearLayout(this).apply {
+                orientation = LinearLayout.VERTICAL
+                gravity = Gravity.CENTER
+                background = rounded(CARD, BORDER, 20)
+                setPadding(dp(14), dp(12), dp(14), dp(10))
+                pressable { sounds?.play("boop", 0.4f); startFight(k.id) }
+            }
+            c.addView(TextView(this).apply {
+                text = k.emoji; textSize = 26f; gravity = Gravity.CENTER
+            })
+            c.addView(TextView(this).apply {
+                text = k.name; textSize = 12f
+                setTextColor(INK); gravity = Gravity.CENTER
+                setPadding(0, dp(3), 0, 0)
+            })
+            c.addView(TextView(this).apply {
+                text = k.title; textSize = 10f
+                setTextColor(DIM); gravity = Gravity.CENTER
+            })
+            fightShelf.addView(c, LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT).apply { rightMargin = dp(8) })
+        }
+        root.addView(android.widget.HorizontalScrollView(this).apply {
+            isHorizontalScrollBarEnabled = false
+            addView(fightShelf)
+        })
+
         // ── message / art mode: put words on the glass ──────────────
         root.addView(TextView(this).apply {
             text = "PUT WORDS ON HIM"
@@ -544,6 +585,44 @@ class MainActivity : AppCompatActivity() {
         say(label)
     }
 
+    /** launch (or toggle off) an arcade brawl with the chosen fighter */
+    private fun startFight(kindId: String) {
+        selectedFighter = kindId
+        if (Host.streamer == null) {
+            say("connect his block first — the arena is the glass")
+            return
+        }
+        val cur = Host.streamer?.scene
+        if (cur is FightScene && cur.playerId == kindId) {
+            cur.abort()
+            say("left the arena 🚪")
+            return
+        }
+        val k = Fighters.byId(kindId)
+        Host.setScene(FightScene(kindId, onLog = { line -> runOnUiThread { say(line) } }))
+        setMode("awake")
+        say("🥊 ${k.emoji} ${k.name} steps up — tap/swipe/hold to fight, circle to charge")
+    }
+
+    /** the magic: snapping a second block on starts the duel; pulling it
+     *  off pauses it. (Step 1: both fighters render on the master block;
+     *  splitting them across both blocks via the relay is next.) */
+    private fun onBlocksSnap(snapped: Boolean, secondIdx: Int) {
+        if (Host.streamer == null) return
+        if (snapped) {
+            if (Host.streamer?.scene is FightScene) return   // already brawling
+            val k = Fighters.byId(selectedFighter)
+            Host.setScene(FightScene(selectedFighter,
+                onLog = { line -> runOnUiThread { say(line) } }))
+            setMode("awake")
+            sounds?.play("jingle")
+            say("🔗 SNAP! ${k.emoji} ${k.name} enters the ring — FIGHT!")
+        } else {
+            (Host.streamer?.scene as? FightScene)?.abort()
+            say("🔌 blocks apart — fight paused")
+        }
+    }
+
     private fun startBattle(shadow: Boolean) {
         if (Host.streamer == null) {
             say("connect his block first — the arena is the glass")
@@ -647,6 +726,9 @@ class MainActivity : AppCompatActivity() {
         }
         Host.onStatus = { msg -> say(msg) }
         Host.onHosting = { runOnUiThread { sounds?.play("hello") } }
+        Host.onSnap = { snapped, secondIdx ->
+            runOnUiThread { onBlocksSnap(snapped, secondIdx) }
+        }
         Host.start(applicationContext)   // discovery+connect; promotes to
                                          // a foreground service once a
                                          // device is actually open

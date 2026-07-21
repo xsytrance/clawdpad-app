@@ -37,6 +37,12 @@ object Host {
     var onStatus: (String) -> Unit = {}
     var onHosting: () -> Unit = {}
 
+    /** CLAWD COMBAT: fires (snapped, secondDeviceIndex) when the block
+     *  topology count crosses 2 — i.e. a second block is snapped on / off.
+     *  Delivered on the keeper thread. */
+    @Volatile var onSnap: ((Boolean, Int) -> Unit)? = null
+    @Volatile private var lastDeviceCount = -1   // -1 = not yet baselined
+
     /** raw-traffic capture for touch-protocol reverse engineering:
      *  adb logcat -s clawd-capture   (toggled by long-press on status) */
     @Volatile var captureRaw = false
@@ -164,6 +170,21 @@ object Host {
                 // thread so consumers see a single-threaded touch stream
                 Blocks.decode(sysex, blocks) { ev ->
                     handler?.post { dispatchTouch(ev) }
+                }
+                // snap detection: topology device count crossed a threshold.
+                // The first topology after connect just sets the baseline (no
+                // fire) so the launch state — snapped or not — never auto-starts.
+                val dc = blocks.deviceCount
+                if (dc > 0 && dc != lastDeviceCount) {
+                    val firstSeen = lastDeviceCount < 0
+                    lastDeviceCount = dc
+                    if (!firstSeen) {
+                        val second = blocks.devices
+                            .firstOrNull { it.first != blocks.topologyIndex }?.first ?: -1
+                        android.util.Log.i("clawd-snap",
+                            "SNAP snapped=${dc >= 2} second=$second")
+                        handler?.post { onSnap?.invoke(dc >= 2, second) }
+                    }
                 }
                 // legacy probabilistic tap (timestamp-byte coincidence) —
                 // only until the real decoder proves itself on this block
