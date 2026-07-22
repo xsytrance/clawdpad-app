@@ -612,17 +612,20 @@ class MainActivity : AppCompatActivity() {
         if (snapped) {
             Host.streamer?.secondIdx = secondIdx              // relay to block 2
             if (Host.streamer?.scene is PokeBattleScene) return  // already battling
-            // pick two distinct real species (save data will assign teams later)
+            // pick two distinct real species from the full Gen-III dex (save
+            // data will assign real teams later)
+            dev.clawdpad.poke.PokeData.ensure(applicationContext)
             val rng = java.util.Random()
-            val a = Pokedex.random(rng)
-            var b = Pokedex.random(rng)
-            while (b.id == a.id) b = Pokedex.random(rng)
-            Host.setScene(PokeBattleScene(a.id, b.id,
+            val a = dev.clawdpad.poke.PokeData.random(rng)
+            var b = dev.clawdpad.poke.PokeData.random(rng)
+            while (b == a) b = dev.clawdpad.poke.PokeData.random(rng)
+            Host.setScene(PokeBattleScene(a, b,
                 seed = System.currentTimeMillis(),
                 onLog = { line -> runOnUiThread { say(line) } }))
             setMode("awake")
             sounds?.play("jingle")
-            say("🔗 SNAP! ${a.name} vs ${b.name} — auto-battle!")
+            fun cap(s: String) = s.replaceFirstChar { it.uppercase() }
+            say("🔗 SNAP! ${cap(a)} vs ${cap(b)} — auto-battle!")
         } else {
             Host.streamer?.secondIdx = -1
             (Host.streamer?.scene as? PokeBattleScene)?.abort()
