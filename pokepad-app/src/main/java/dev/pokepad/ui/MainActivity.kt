@@ -75,8 +75,8 @@ class MainActivity : AppCompatActivity() {
             startActivity(Intent(this, PickerActivity::class.java))
         }, lp(top = 12).also { it.width = dp(300); it.height = dp(56) })
 
-        root.addView(bigButton("🔗  CONNECT BLOCKS", CARD, DIM) {
-            toast("Snap-to-battle on the blocks is coming next — this build is the on-phone battle.")
+        root.addView(bigButton("🔗  CONNECT BLOCKS", CARD, INK) {
+            startActivity(Intent(this, ConnectActivity::class.java))
         }, lp(top = 12).also { it.width = dp(300); it.height = dp(56) })
 
         root.addView(TextView(this).apply {
