@@ -1,0 +1,584 @@
+<style>
+  /* ===== ClawdPad manual — "The LED Glass" ============================= */
+  :root {
+    /* neutrals: charcoal with a slight blue-violet bias (the block's off-glass) */
+    --ground: #ECEAF2;
+    --panel: #ffffff;
+    --panel-2: #F5F3FA;
+    --ink: #191622;
+    --ink-dim: #5D5A6B;
+    --line: #DEDBE8;
+    --glass: #0b0b11;          /* the block glass — stays dark in both themes */
+    --glass-2: #14141d;
+    --glass-line: #23232f;
+    --glass-ink: #ECEAF6;
+    --glass-dim: #8A87A0;
+    /* the app's real LED type palette */
+    --fire: #F06E3C;  --water: #5096F0; --electric: #F5D246; --grass: #6EC864;
+    --psychic: #F56EA5; --ghost: #8A78C8; --fighting: #D46A6A; --ice: #82D7E1;
+    --normal: #C6BCA6;
+    --accent: #E9B21E;         /* powered-on signature (electric, a touch deeper for light) */
+    --accent-glow: #F5D246;
+    --shadow: 0 1px 2px rgba(20,16,30,.06), 0 8px 30px rgba(20,16,30,.08);
+    --radius: 14px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ground: #0d0d13; --panel: #14141d; --panel-2: #191922;
+      --ink: #ECEAF6; --ink-dim: #9A97AD; --line: #262631;
+      --accent: #F5D246;
+      --shadow: 0 1px 2px rgba(0,0,0,.4), 0 12px 40px rgba(0,0,0,.45);
+    }
+  }
+  :root[data-theme="light"] {
+    --ground: #ECEAF2; --panel: #ffffff; --panel-2: #F5F3FA;
+    --ink: #191622; --ink-dim: #5D5A6B; --line: #DEDBE8; --accent: #E9B21E;
+    --shadow: 0 1px 2px rgba(20,16,30,.06), 0 8px 30px rgba(20,16,30,.08);
+  }
+  :root[data-theme="dark"] {
+    --ground: #0d0d13; --panel: #14141d; --panel-2: #191922;
+    --ink: #ECEAF6; --ink-dim: #9A97AD; --line: #262631; --accent: #F5D246;
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 12px 40px rgba(0,0,0,.45);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--ground); color: var(--ink);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    line-height: 1.6; -webkit-font-smoothing: antialiased;
+    font-size: 17px;
+  }
+  .mono { font-family: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace; }
+  .wrap { max-width: 940px; margin: 0 auto; padding: 0 20px; }
+  a { color: inherit; }
+
+  /* ---- hero: the LED glass ------------------------------------------- */
+  .hero {
+    background: var(--glass);
+    border-bottom: 1px solid var(--glass-line);
+    position: relative; overflow: hidden;
+  }
+  .hero::before {   /* faint LED dot-grid texture */
+    content: ""; position: absolute; inset: 0;
+    background-image: radial-gradient(rgba(255,255,255,.05) 1px, transparent 1.4px);
+    background-size: 13px 13px; opacity: .5; pointer-events: none;
+  }
+  .hero-inner { position: relative; padding: 54px 20px 46px; max-width: 940px; margin: 0 auto; }
+  .power {
+    display: inline-flex; align-items: center; gap: 8px; margin-bottom: 26px;
+    color: var(--glass-dim); font-size: 12.5px; letter-spacing: .14em; text-transform: uppercase;
+  }
+  .led-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--grass);
+    box-shadow: 0 0 8px var(--grass); animation: pulse 2.6s ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { opacity: .55; } 50% { opacity: 1; } }
+  #wordmark { display: block; width: 100%; max-width: 620px; height: auto; }
+  .tagline { color: var(--glass-ink); font-size: clamp(19px, 3.5vw, 26px); font-weight: 600;
+    margin: 26px 0 8px; text-wrap: balance; letter-spacing: -.01em; }
+  .tagline em { color: var(--accent-glow); font-style: normal; }
+  .subtag { color: var(--glass-dim); max-width: 52ch; margin: 0; }
+  .vchip { position: absolute; top: 22px; right: 22px; }
+  .chip {
+    font-family: ui-monospace, Menlo, monospace; font-size: 12px; letter-spacing: .05em;
+    color: var(--glass-dim); border: 1px solid var(--glass-line); border-radius: 999px;
+    padding: 5px 11px; background: rgba(255,255,255,.03);
+  }
+
+  /* ---- section scaffolding ------------------------------------------- */
+  section { padding: 46px 0; border-bottom: 1px solid var(--line); }
+  section:last-of-type { border-bottom: 0; }
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 9px;
+    font-size: 12px; letter-spacing: .16em; text-transform: uppercase; color: var(--ink-dim);
+    margin: 0 0 14px; font-family: ui-monospace, Menlo, monospace;
+  }
+  .eyebrow::before { content: ""; width: 22px; height: 3px; border-radius: 2px; background: var(--accent); }
+  h2 { font-size: clamp(24px, 4vw, 33px); font-weight: 800; letter-spacing: -.02em;
+    margin: 0 0 12px; text-wrap: balance; }
+  h2 .em { font-size: .9em; margin-right: .35em; }
+  p { margin: 0 0 14px; max-width: 68ch; }
+  .lead { font-size: 19px; color: var(--ink); }
+  .dim { color: var(--ink-dim); }
+
+  /* ---- featured Poképad panel ---------------------------------------- */
+  .feature {
+    display: grid; grid-template-columns: 1.05fr .95fr; gap: 30px; align-items: center;
+  }
+  .arena {
+    background: var(--glass); border: 1px solid var(--glass-line); border-radius: var(--radius);
+    padding: 18px; box-shadow: var(--shadow); position: relative;
+  }
+  .arena-blocks { display: flex; gap: 10px; justify-content: center; }
+  .arena canvas { image-rendering: pixelated; width: 46%; height: auto; aspect-ratio: 1;
+    background: #07070c; border-radius: 8px; border: 1px solid #1c1c26; }
+  .arena-read {
+    display: flex; justify-content: space-between; align-items: center; margin-top: 12px;
+    color: var(--glass-dim); font-family: ui-monospace, Menlo, monospace; font-size: 12px; letter-spacing: .04em;
+  }
+  .arena-read b { color: var(--accent-glow); font-weight: 600; }
+  .snaphint { text-align:center; color: var(--glass-dim); font-size: 11.5px; letter-spacing:.08em;
+    text-transform: uppercase; margin-top: 6px; font-family: ui-monospace, Menlo, monospace; }
+
+  /* ---- mode grid ------------------------------------------------------ */
+  .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+  .card {
+    background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 20px 20px 22px; box-shadow: var(--shadow); position: relative; overflow: hidden;
+  }
+  .card::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: var(--t, var(--normal)); opacity: .9; }
+  .card h3 { margin: 4px 0 6px; font-size: 19px; font-weight: 700; letter-spacing: -.01em;
+    display: flex; align-items: center; gap: 10px; }
+  .card h3 .ic { font-size: 22px; line-height: 1; }
+  .typechip {
+    font-family: ui-monospace, Menlo, monospace; font-size: 10.5px; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--t, var(--normal));
+    border: 1px solid color-mix(in srgb, var(--t, var(--normal)) 45%, transparent);
+    background: color-mix(in srgb, var(--t, var(--normal)) 12%, transparent);
+    border-radius: 999px; padding: 3px 9px; align-self: flex-start;
+  }
+  .card p { font-size: 15px; margin: 0 0 12px; color: var(--ink-dim); }
+  .roster { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+  .fighter {
+    font-size: 13px; background: var(--panel-2); border: 1px solid var(--line);
+    border-radius: 8px; padding: 5px 9px; display: inline-flex; gap: 6px; align-items: center;
+  }
+  .fighter small { color: var(--ink-dim); }
+  .ctrls { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 2px; }
+  .key {
+    font-family: ui-monospace, Menlo, monospace; font-size: 12px;
+    background: var(--panel-2); border: 1px solid var(--line); border-bottom-width: 2px;
+    border-radius: 7px; padding: 3px 8px; white-space: nowrap;
+  }
+  .key b { color: var(--ink); font-weight: 600; }
+
+  /* ---- gesture readout ----------------------------------------------- */
+  .readout {
+    background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
+    box-shadow: var(--shadow); overflow: hidden;
+  }
+  .readout .row {
+    display: grid; grid-template-columns: 120px 1fr; gap: 16px; align-items: baseline;
+    padding: 13px 20px; border-top: 1px solid var(--line);
+  }
+  .readout .row:first-child { border-top: 0; }
+  .readout .g { font-family: ui-monospace, Menlo, monospace; font-weight: 600; color: var(--accent);
+    letter-spacing: .02em; }
+  .readout .d { color: var(--ink-dim); font-size: 15px; }
+
+  /* ---- steps ---------------------------------------------------------- */
+  .steps { display: grid; gap: 12px; counter-reset: s; padding: 0; margin: 8px 0 0; list-style: none; }
+  .steps li { display: grid; grid-template-columns: 34px 1fr; gap: 14px; align-items: start; }
+  .steps li::before {
+    counter-increment: s; content: counter(s);
+    font-family: ui-monospace, Menlo, monospace; font-weight: 700; font-size: 14px;
+    color: var(--glass); background: var(--accent); width: 30px; height: 30px;
+    border-radius: 8px; display: grid; place-items: center;
+  }
+  .steps b { font-weight: 650; }
+
+  /* ---- code / callout ------------------------------------------------- */
+  pre.code {
+    background: var(--glass); color: var(--glass-ink); border: 1px solid var(--glass-line);
+    border-radius: 10px; padding: 14px 16px; overflow-x: auto; margin: 6px 0 0;
+    font-family: ui-monospace, Menlo, monospace; font-size: 13.5px; line-height: 1.5;
+  }
+  pre.code .p { color: var(--grass); }
+  .covenant {
+    display: flex; gap: 14px; align-items: flex-start;
+    border-left: 3px solid var(--accent); background: var(--panel-2);
+    border-radius: 0 10px 10px 0; padding: 16px 18px; margin-top: 8px;
+  }
+  .covenant .q { font-style: italic; color: var(--ink); }
+
+  /* ---- troubleshooting ------------------------------------------------ */
+  .trouble { display: grid; gap: 12px; }
+  .trouble .t {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 15px 18px;
+    box-shadow: var(--shadow);
+  }
+  .trouble .t b { display: block; margin-bottom: 3px; }
+  .trouble .t span { color: var(--ink-dim); font-size: 15px; }
+
+  footer { padding: 40px 0 60px; color: var(--ink-dim); text-align: center; font-size: 14px; }
+  footer .mark { color: var(--accent); font-weight: 700; letter-spacing: .04em; }
+
+  @media (max-width: 720px) {
+    .feature { grid-template-columns: 1fr; }
+    .grid { grid-template-columns: 1fr; }
+    .readout .row { grid-template-columns: 96px 1fr; gap: 10px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .led-dot { animation: none; }
+    * { scroll-behavior: auto; }
+  }
+</style>
+
+<header class="hero">
+  <div class="hero-inner">
+    <div class="vchip"><span class="chip">clawdpad · v0.4</span></div>
+    <div class="power"><span class="led-dot"></span> block online</div>
+    <canvas id="wordmark" width="620" height="150" aria-label="CLAWDPAD"></canvas>
+    <p class="tagline">He lives on the block. <em>Pet him there.</em></p>
+    <p class="subtag">A living creature, a wardrobe, a music visualizer, an arcade fighter —
+      and a real autonomous Pokémon battle that plays across two blocks when you snap them together.</p>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- QUICK START -->
+  <section id="start">
+    <p class="eyebrow">Quick start</p>
+    <h2>Get him onto the glass</h2>
+    <ol class="steps">
+      <li><span><b>Install the app.</b> Open <span class="mono">clawdpad-poke.apk</span> and tap
+        <b>Install / Update</b>. It updates over any previous ClawdPad and keeps your data.
+        <div style="margin-top:8px"></div>
+        <pre class="code">termux-setup-storage        <span class="p"># once — grants file access</span>
+termux-open ~/storage/downloads/clawdpad-poke.apk</pre></li>
+      <li><b>Wake the block.</b> Power on the Lightpad Block and turn Bluetooth on.</li>
+      <li><b>Connect.</b> Open ClawdPad and tap <b>🔌 connect to my block</b>. It shows
+        <span class="mono dim">“looking for your block…”</span>, links up, and CLAWD appears on the pad.
+        <span class="dim">The&nbsp;Keeper holds the link and auto-reconnects if the block drops or sleeps.</span></li>
+    </ol>
+  </section>
+
+  <!-- BASICS -->
+  <section id="basics">
+    <p class="eyebrow">The controls</p>
+    <h2>The glass is the controller</h2>
+    <p class="dim">Every mode reads your touch as one of four gestures. When you start a mode, the app’s
+      status line reminds you which ones it uses.</p>
+    <div class="readout" role="table" aria-label="Gestures">
+      <div class="row"><span class="g">TAP</span><span class="d">a quick press-and-release</span></div>
+      <div class="row"><span class="g">SWIPE</span><span class="d">press and slide across the pad</span></div>
+      <div class="row"><span class="g">HOLD</span><span class="d">press and keep your finger down</span></div>
+      <div class="row"><span class="g">SCRUB</span><span class="d">drag back-and-forth or in a circle — used to “charge”</span></div>
+    </div>
+  </section>
+
+  <!-- POKÉPAD (featured) -->
+  <section id="pokepad">
+    <p class="eyebrow" style="--accent: var(--fire)">The main event</p>
+    <div class="feature">
+      <div>
+        <h2><span class="em">🔗</span>Poképad — snap to battle</h2>
+        <p class="lead">Snap a second block onto the first and a fully autonomous
+          <b>Gen-III Pokémon battle</b> begins — one full creature per block, no human control.</p>
+        <p class="dim">They fight by the <b>real</b> mechanics: authentic base stats across all
+          <b>386 species</b>, the real 17-type chart (fire melts grass, water douses fire, ground shrugs
+          off electric), the damage formula, crits, and a move-picking AI on both sides.</p>
+        <p class="dim">Watch the beats: a <b>Poké-Ball drops and bursts open</b> to summon each mon, the
+          attacker <b>lunges</b> with an impact streak, the defender <b>flashes and recoils</b>, and a
+          knocked-out mon <b>greys out, tips over, and sinks away</b>. HP bars ride the top of each block;
+          a banner calls the action — <span class="mono">SUPER!</span>, <span class="mono">RESIST</span>,
+          the move name. Pull the blocks apart to end it.</p>
+      </div>
+      <div class="arena" aria-label="Live demo of a two-block battle">
+        <div class="arena-blocks">
+          <canvas id="b1" width="15" height="15"></canvas>
+          <canvas id="b2" width="15" height="15"></canvas>
+        </div>
+        <div class="arena-read"><span id="rl">CHARIZARD</span><b id="banner">READY</b><span id="rr">VENUSAUR</span></div>
+        <div class="snaphint">▸ live preview — the real thing runs on your LEDs</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MODES -->
+  <section id="modes">
+    <p class="eyebrow">Everything else on the block</p>
+    <h2>The rest of the toybox</h2>
+    <div class="grid">
+
+      <article class="card" style="--t: var(--fighting)">
+        <span class="typechip">fighting</span>
+        <h3><span class="ic">🥊</span> CLAWD COMBAT</h3>
+        <p>An arcade brawler. Pick a fighter, then snap a second block on and the arena spans
+          <b>both</b> blocks — hits knock fighters across the seam with confetti-gore.</p>
+        <div class="roster">
+          <span class="fighter">🐾 CLAWD <small>all-rounder</small></span>
+          <span class="fighter">🤖 TINBOT <small>iron wall</small></span>
+          <span class="fighter">🐱 PROWL <small>alley cat</small></span>
+          <span class="fighter">🐸 HOPPS <small>springheel</small></span>
+          <span class="fighter">👻 BOO <small>trickster</small></span>
+          <span class="fighter">🌸 PUFF <small>pink peril</small></span>
+        </div>
+        <div class="ctrls" style="margin-top:12px">
+          <span class="key"><b>Tap</b> strike</span><span class="key"><b>Hold</b> guard</span>
+          <span class="key"><b>Swipe</b> dodge</span><span class="key"><b>Circle</b> charge</span>
+        </div>
+      </article>
+
+      <article class="card" style="--t: var(--normal)">
+        <span class="typechip">battle</span>
+        <h3><span class="ic">⚔️</span> Train &amp; Battle</h3>
+        <p>“Duelist’s Hands.” Train CLAWD and fight a rival in a human-free shadow mode tuned for the
+          block. He earns <b>Levels &amp; XP</b> as you go.</p>
+        <div class="ctrls">
+          <span class="key"><b>Strike</b> hit</span><span class="key"><b>Hold</b> guard</span>
+          <span class="key"><b>Swipe</b> dodge</span><span class="key"><b>Scrub</b> charge</span>
+        </div>
+      </article>
+
+      <article class="card" style="--t: var(--psychic)">
+        <span class="typechip">his moods</span>
+        <h3><span class="ic">🎭</span> His Moods</h3>
+        <p>Cycle CLAWD’s idle personality on the glass. Pet him to interact — he reacts to your touch.</p>
+      </article>
+
+      <article class="card" style="--t: var(--water)">
+        <span class="typechip">wardrobe</span>
+        <h3><span class="ic">👕</span> The Clawdrobe</h3>
+        <p><b>24 costumes</b> across category tabs — mix and match hats, looks, and accessories. Your
+          pick shows on the block instantly.</p>
+      </article>
+
+      <article class="card" style="--t: var(--electric)">
+        <span class="typechip">music</span>
+        <h3><span class="ic">🎵</span> Music &amp; Dance</h3>
+        <p>Allow audio — that’s how he hears — then play something with a beat. CLAWD <b>dances to it</b>
+          with lyric-spark visuals reacting to the sound.</p>
+      </article>
+
+      <article class="card" style="--t: var(--grass)">
+        <span class="typechip">paint</span>
+        <h3><span class="ic">🎨</span> Paint</h3>
+        <p>Finger-paint straight onto the block — touch the pad and it <b>glows</b> where you draw.</p>
+      </article>
+
+      <article class="card" style="--t: var(--ice)">
+        <span class="typechip">message</span>
+        <h3><span class="ic">📣</span> Put Words On Him</h3>
+        <p>Scroll a custom message across the block as a marquee — plus a mode for putting text and simple
+          art on the glass.</p>
+      </article>
+
+      <article class="card" style="--t: var(--ghost)">
+        <span class="typechip">developer</span>
+        <h3><span class="ic">🎙</span> Capture</h3>
+        <p>Dumps decoded touch data to the log for reverse-engineering the hardware. Read it on a computer:</p>
+        <pre class="code">adb logcat -s clawd-capture</pre>
+      </article>
+
+    </div>
+  </section>
+
+  <!-- TROUBLESHOOTING -->
+  <section id="fix">
+    <p class="eyebrow">If something’s off</p>
+    <h2>Troubleshooting</h2>
+    <div class="trouble">
+      <div class="t"><b>The block won’t connect</b><span>Make sure it’s powered and Bluetooth is on, toggle
+        Bluetooth, and tap <span class="mono">🔌 connect to my block</span> again — the Keeper keeps retrying.</span></div>
+      <div class="t"><b>“connect his block first”</b><span>You started a mode before connecting. Connect the
+        block, then open the mode.</span></div>
+      <div class="t"><b>Snapping doesn’t start a battle</b><span>Connect the first block, then physically snap the
+        second onto it — you’ll see <span class="mono">🔗 SNAP!</span> and the matchup. Pulling them apart ends it.</span></div>
+      <div class="t"><b>“App not installed” on update</b><span>A signature mismatch. Long-press the old ClawdPad
+        icon → Uninstall, then install fresh.</span></div>
+      <div class="t"><b>Music mode does nothing</b><span>Grant the audio permission, then tap dance again.</span></div>
+    </div>
+  </section>
+
+  <!-- COVENANT -->
+  <section id="covenant">
+    <p class="eyebrow">The rule of the house</p>
+    <h2>Facts are sacred, feelings are free</h2>
+    <div class="covenant">
+      <span style="font-size:22px" aria-hidden="true">🕯️</span>
+      <p class="q" style="margin:0">Real stats, lore, and mechanics are used as data — never fabricated.
+        Every creature is an <b>original</b> pixel reinterpretation, never a ripped sprite. Poképad targets
+        Gen&nbsp;III; real save-data teams are on the roadmap, and until then the snap-battle draws from the
+        full dex.</p>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <span class="mark">CLAWDPAD</span> · made for Rod · snap ’em together and watch them fight 🔥
+</footer>
+
+<script>
+(function () {
+  "use strict";
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  /* ---- glass color, robust to theme ---- */
+  var GLASS = "#0b0b11";
+
+  /* ===== 1. LED wordmark ============================================= */
+  var GLY = {
+    C:["01110","10001","10000","10000","10000","10001","01110"],
+    L:["10000","10000","10000","10000","10000","10000","11111"],
+    A:["01110","10001","10001","11111","10001","10001","10001"],
+    W:["10001","10001","10001","10101","10101","10101","01010"],
+    D:["11110","10001","10001","10001","10001","10001","11110"],
+    P:["11110","10001","10001","11110","10000","10000","10000"]
+  };
+  var WORD = "CLAWDPAD";
+  var cvs = document.getElementById("wordmark");
+  var ctx = cvs.getContext("2d");
+  var GW = 5, GH = 7, GAP = 1;
+  var cols = WORD.length * (GW + GAP) - GAP;
+
+  function fit() {
+    var cssW = Math.min(cvs.parentElement.clientWidth, 620);
+    var px = Math.max(6, Math.floor(cssW / cols));
+    var w = cols * px, h = GH * px;
+    cvs.width = w; cvs.height = h;
+    cvs.style.width = w + "px"; cvs.style.height = h + "px";
+    return px;
+  }
+  var PX = fit();
+  var accent = getComputedStyle(document.documentElement).getPropertyValue("--accent-glow").trim() || "#F5D246";
+
+  // build the ordered list of lit cells (left-to-right sweep)
+  var lit = [];
+  for (var i = 0; i < WORD.length; i++) {
+    var g = GLY[WORD[i]]; if (!g) continue;
+    var ox = i * (GW + GAP);
+    for (var x = 0; x < GW; x++) for (var y = 0; y < GH; y++)
+      if (g[y][x] === "1") lit.push([ox + x, y]);
+  }
+
+  function drawWord(reveal) {
+    ctx.clearRect(0, 0, cvs.width, cvs.height);
+    // unlit grid
+    ctx.fillStyle = "rgba(255,255,255,0.045)";
+    for (var cx = 0; cx < cols; cx++) for (var cy = 0; cy < GH; cy++)
+      ctx.fillRect(cx * PX + 1, cy * PX + 1, PX - 2, PX - 2);
+    // lit pixels up to `reveal` fraction (by column for a sweep feel)
+    var maxCol = reveal * cols;
+    ctx.save();
+    ctx.shadowColor = accent; ctx.shadowBlur = PX * 0.9;
+    ctx.fillStyle = accent;
+    for (var k = 0; k < lit.length; k++) {
+      if (lit[k][0] <= maxCol) {
+        var lx = lit[k][0] * PX, ly = lit[k][1] * PX;
+        ctx.fillRect(lx + 1, ly + 1, PX - 2, PX - 2);
+      }
+    }
+    ctx.restore();
+  }
+
+  if (reduce) { drawWord(1); }
+  else {
+    var t0 = null;
+    (function step(ts) {
+      if (t0 === null) t0 = ts;
+      var p = Math.min(1, (ts - t0) / 1100);
+      drawWord(p * 1.02);
+      if (p < 1) requestAnimationFrame(step);
+    })(performance.now ? performance.now() : Date.now());
+  }
+  window.addEventListener("resize", function () { PX = fit(); drawWord(1); });
+
+  /* ===== 2. two-block battle demo =================================== */
+  function hx(h){ h=h.replace('#',''); return [parseInt(h.substr(0,2),16),parseInt(h.substr(2,2),16),parseInt(h.substr(4,2),16)]; }
+  function lerp(a,b,t){ return [a[0]+(b[0]-a[0])*t, a[1]+(b[1]-a[1])*t, a[2]+(b[2]-a[2])*t]; }
+  function css(c){ return "rgb("+(c[0]|0)+","+(c[1]|0)+","+(c[2]|0)+")"; }
+  var cs = getComputedStyle(document.documentElement);
+  var FIRE = hx((cs.getPropertyValue("--fire").trim())||"#F06E3C");
+  var GRASS = hx((cs.getPropertyValue("--grass").trim())||"#6EC864");
+  var WHITE = [245,245,245], GREY = [120,120,130];
+
+  var c1 = document.getElementById("b1"), x1 = c1.getContext("2d");
+  var c2 = document.getElementById("b2"), x2 = c2.getContext("2d");
+  [x1,x2].forEach(function(x){ x.imageSmoothingEnabled = false; });
+
+  // draw a simple 15x15 creature: blob body + eyes, with bob/flash/faint/scale/shift
+  function creature(x, base, o) {
+    x.clearRect(0,0,15,15);
+    x.fillStyle = GLASS; x.fillRect(0,0,15,15);
+    var col = base;
+    if (o.flash > 0) col = lerp(base, WHITE, o.flash);
+    if (o.faint > 0) col = lerp(base, GREY, o.faint);
+    var alpha = 1 - (o.faint > 0 ? o.faint*0.7 : 0);
+    var cx = 7 + (o.dx||0);
+    var cy = 7 + (o.bob||0) + (o.sink||0);
+    var s = (o.scale==null?1:o.scale);
+    // body ellipse
+    for (var yy=-4; yy<=4; yy++) for (var xx=-3; xx<=3; xx++) {
+      var d = (xx*xx)/(9) + (yy*yy)/(16);
+      if (d <= 1) {
+        var px = Math.round(cx+xx), py = Math.round(cy+yy);
+        // scale from center for summon
+        if (s < 1) { px = Math.round(cx + xx*s); py = Math.round(cy + yy*s); }
+        if (px<0||px>14||py<0||py>14) continue;
+        var shade = yy>1 ? 0.8 : 1;
+        var cc = [col[0]*shade, col[1]*shade, col[2]*shade];
+        x.globalAlpha = alpha; x.fillStyle = css(cc);
+        x.fillRect(px, py, 1, 1);
+      }
+    }
+    // eyes (skip while tiny)
+    if (s > 0.6 && o.faint < 0.5) {
+      x.globalAlpha = alpha; x.fillStyle = "#14121a";
+      x.fillRect(Math.round(cx-2), Math.round(cy-1), 1,1);
+      x.fillRect(Math.round(cx+1), Math.round(cy-1), 1,1);
+    } else if (o.faint >= 0.5) { // x_x
+      x.globalAlpha = alpha; x.fillStyle = "#14121a";
+      x.fillRect(Math.round(cx-2), Math.round(cy-1),1,1);
+      x.fillRect(Math.round(cx+2), Math.round(cy-1),1,1);
+    }
+    x.globalAlpha = 1;
+    // HP bar (row 0)
+    var n = Math.round((o.hp==null?1:o.hp) * 13);
+    for (var i=0;i<13;i++){ x.fillStyle="#28262e"; x.fillRect(1+i,0,1,1); }
+    var hc = (o.hp>0.5)?"#6EDC82":(o.hp>0.25?"#E67850":"#D2463C");
+    for (var j=0;j<n;j++){ x.fillStyle=hc; x.fillRect(1+j,0,1,1); }
+  }
+
+  var banner = document.getElementById("banner");
+  function setBanner(txt){ if (banner.textContent!==txt) banner.textContent = txt; }
+
+  // battle timeline (seconds), loops
+  var T = 13.5;
+  function frame(now) {
+    var t = ((now/1000) % T);
+    var o1={bob:0,dx:0,flash:0,faint:0,hp:1,scale:1};
+    var o2={bob:0,dx:0,flash:0,faint:0,hp:1,scale:1};
+    var bob = Math.sin(now/380) < 0 ? 0 : -1;
+
+    if (t < 1.4) {                    // SUMMON
+      var s = Math.min(1, t/1.1);
+      o1.scale=s; o2.scale=s; setBanner("GO!");
+      if (t<0.5){ o1.flash=(0.5-t); o2.flash=(0.5-t); }
+    } else if (t < 4.2) {             // FACE OFF
+      o1.bob=bob; o2.bob=bob; setBanner("VS");
+    } else if (t < 5.2) {             // hit 1 (fire super-effective)
+      var f=(t-4.2);
+      o1.dx = f<0.5 ? Math.round(f*8) : Math.round((1-f)*8);
+      if (f>0.35){ o2.flash=Math.max(0,1-(f-0.35)*3.5); o2.hp=0.45; setBanner("SUPER!"); }
+      else setBanner("SUPER!");
+      o2.hp = f>0.35?0.45:1;
+    } else if (t < 6.6) {             // breathe
+      o1.bob=bob; o2.bob=bob; o2.hp=0.45; setBanner("VS");
+    } else if (t < 7.6) {             // hit 2 (KO)
+      var f2=(t-6.6);
+      o1.dx = f2<0.5 ? Math.round(f2*8) : Math.round((1-f2)*8);
+      o2.hp = f2>0.35?0.0:0.45;
+      if (f2>0.35){ o2.flash=Math.max(0,1-(f2-0.35)*3.5); setBanner("K.O.!"); } else setBanner("SUPER!");
+    } else if (t < 10) {             // FAINT + victory
+      var f3=Math.min(1,(t-7.6)/1.6);
+      o2.faint=f3; o2.sink=Math.round(f3*6); o2.hp=0;
+      o1.bob=bob; setBanner("WIN");
+    } else {                          // hold / reset fade
+      o1.bob=bob; o2.faint=1; o2.sink=6; o2.hp=0; setBanner("WIN");
+    }
+    creature(x1, FIRE, o1);
+    creature(x2, GRASS, o2);
+    if (!reduce) requestAnimationFrame(frame);
+  }
+
+  if (reduce) {
+    creature(x1, FIRE, {bob:0,hp:1,scale:1,flash:0,faint:0});
+    creature(x2, GRASS, {bob:0,hp:0.45,scale:1,flash:0,faint:0});
+    setBanner("VS");
+  } else {
+    requestAnimationFrame(frame);
+  }
+})();
+</script>
