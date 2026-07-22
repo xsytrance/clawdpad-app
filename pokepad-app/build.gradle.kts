@@ -4,18 +4,18 @@ plugins {
 }
 
 android {
-    namespace = "dev.clawdpad.host"
+    namespace = "dev.pokepad"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "dev.clawdpad.host"
-        minSdk = 29           // Pixel 4 era onward; both of Rod's Pixels fine
+        applicationId = "dev.pokepad"
+        minSdk = 29
         targetSdk = 36
         versionCode = 1
         versionName = "0.1"
     }
     buildTypes {
-        debug { }             // v0.1 ships as a debug sideload
+        debug { }
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -27,6 +27,4 @@ android {
 dependencies {
     implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.appcompat:appcompat:1.7.0")
-    testImplementation("junit:junit:4.13.2")
-    testImplementation("org.json:json:20240303")
 }

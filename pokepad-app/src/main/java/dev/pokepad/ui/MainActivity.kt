@@ -1,0 +1,112 @@
+package dev.pokepad.ui
+
+import android.content.Intent
+import android.graphics.Color
+import android.graphics.drawable.GradientDrawable
+import android.os.Bundle
+import android.view.Gravity
+import android.view.View
+import android.widget.ImageView
+import android.widget.LinearLayout
+import android.widget.ScrollView
+import android.widget.TextView
+import androidx.appcompat.app.AppCompatActivity
+import dev.pokepad.R
+import dev.pokepad.core.PokeData
+import java.util.Random
+
+/**
+ * Poképad home — the front door. Themed dark "arcade" screen with the Poké Ball
+ * mark, a title, and the ways in: a battle (watch two mon fight by real Gen-III
+ * mechanics on the phone), the fighter picker, and the blocks (coming).
+ */
+class MainActivity : AppCompatActivity() {
+
+    private val BG = Color.parseColor("#0B1020")
+    private val CARD = Color.parseColor("#141B33")
+    private val INK = Color.parseColor("#ECEAF6")
+    private val DIM = Color.parseColor("#8A87A0")
+    private val RED = Color.parseColor("#E23B3B")
+    private val GOLD = Color.parseColor("#F5D246")
+
+    private fun dp(v: Int) = (v * resources.displayMetrics.density).toInt()
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        PokeData.ensure(this)   // load the dex once
+
+        val scroll = ScrollView(this).apply { setBackgroundColor(BG); isFillViewport = true }
+        val root = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER_HORIZONTAL
+            setPadding(dp(28), dp(56), dp(28), dp(36))
+        }
+        scroll.addView(root)
+
+        // Poké Ball mark
+        root.addView(ImageView(this).apply {
+            setImageResource(R.mipmap.ic_launcher_round)
+        }, LinearLayout.LayoutParams(dp(112), dp(112)))
+
+        root.addView(TextView(this).apply {
+            text = "Poképad"
+            setTextColor(INK); textSize = 40f
+            setTypeface(typeface, android.graphics.Typeface.BOLD)
+            gravity = Gravity.CENTER
+        }, lp(top = 18))
+
+        root.addView(TextView(this).apply {
+            text = "REAL GEN-III BATTLES · ON THE BLOCK"
+            setTextColor(GOLD); textSize = 11.5f
+            letterSpacing = 0.18f; gravity = Gravity.CENTER
+        }, lp(top = 6))
+
+        root.addView(TextView(this).apply {
+            text = "386 species · authentic stats, type chart & damage · fully autonomous"
+            setTextColor(DIM); textSize = 13f; gravity = Gravity.CENTER
+        }, lp(top = 14).also { it.width = dp(300) })
+
+        // primary: a random battle you watch on screen
+        root.addView(bigButton("⚔  START A BATTLE", RED, INK) {
+            startActivity(Intent(this, BattleActivity::class.java))   // random matchup
+        }, lp(top = 34).also { it.width = dp(300); it.height = dp(60) })
+
+        root.addView(bigButton("◎  CHOOSE FIGHTERS", CARD, INK) {
+            startActivity(Intent(this, PickerActivity::class.java))
+        }, lp(top = 12).also { it.width = dp(300); it.height = dp(56) })
+
+        root.addView(bigButton("🔗  CONNECT BLOCKS", CARD, DIM) {
+            toast("Snap-to-battle on the blocks is coming next — this build is the on-phone battle.")
+        }, lp(top = 12).also { it.width = dp(300); it.height = dp(56) })
+
+        root.addView(TextView(this).apply {
+            text = "facts are sacred · feelings are free"
+            setTextColor(DIM); textSize = 11.5f; gravity = Gravity.CENTER
+        }, lp(top = 30))
+
+        setContentView(scroll)
+    }
+
+    private fun lp(top: Int = 0): LinearLayout.LayoutParams =
+        LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT)
+            .apply { topMargin = dp(top) }
+
+    private fun bigButton(label: String, bg: Int, fg: Int, onClick: () -> Unit): View {
+        return TextView(this).apply {
+            text = label
+            setTextColor(fg); textSize = 16.5f
+            setTypeface(typeface, android.graphics.Typeface.BOLD)
+            gravity = Gravity.CENTER
+            letterSpacing = 0.04f
+            background = GradientDrawable().apply {
+                cornerRadius = dp(16).toFloat(); setColor(bg)
+                setStroke(dp(1), Color.parseColor("#26314F"))
+            }
+            isClickable = true; isFocusable = true
+            setOnClickListener { onClick() }
+        }
+    }
+
+    private fun toast(m: String) =
+        android.widget.Toast.makeText(this, m, android.widget.Toast.LENGTH_LONG).show()
+}

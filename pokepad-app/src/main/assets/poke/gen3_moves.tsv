@@ -1,0 +1,372 @@
+absorb	grass	20	100	20	0	none	0	0	50	0	0	0		selected-pokemon
+acid	poison	40	100	30	0	none	0	0	0	0	0	0	special-defense:-1	all-opponents
+acid-armor	poison	0	-1	40	0	none	0	0	0	0	0	0	defense:2	user
+aerial-ace	flying	60	-1	20	0	none	0	0	0	0	0	0		selected-pokemon
+aeroblast	flying	100	95	5	0	none	0	0	0	0	0	0		selected-pokemon
+agility	psychic	0	-1	30	0	none	0	0	0	0	0	0	speed:2	user
+air-cutter	flying	55	95	25	0	none	0	0	0	0	0	0		all-opponents
+amnesia	psychic	0	-1	20	0	none	0	0	0	0	0	0	special-defense:2	user
+ancient-power	rock	60	100	5	0	none	0	0	0	0	0	0	attack:1;defense:1;special-attack:1;special-defense:1;speed:1	selected-pokemon
+arm-thrust	fighting	15	100	20	0	none	0	0	0	0	2	5		selected-pokemon
+aromatherapy	grass	0	-1	5	0	none	0	0	0	0	0	0		user-and-allies
+assist	normal	0	-1	20	0	none	0	0	0	0	0	0		user
+astonish	ghost	30	100	15	0	none	0	30	0	0	0	0		selected-pokemon
+attract	normal	0	100	15	0	infatuation	0	0	0	0	0	0		selected-pokemon
+aurora-beam	ice	65	100	20	0	none	0	0	0	0	0	0	attack:-1	selected-pokemon
+barrage	normal	15	85	20	0	none	0	0	0	0	2	5		selected-pokemon
+barrier	psychic	0	-1	30	0	none	0	0	0	0	0	0	defense:2	user
+baton-pass	normal	0	-1	40	0	none	0	0	0	0	0	0		user
+beat-up	dark	10	100	10	0	none	0	0	0	0	6	6		selected-pokemon
+belly-drum	normal	0	-1	10	0	none	0	0	0	0	0	0		user
+bide	normal	0	-1	10	1	none	0	0	0	0	0	0		user
+bind	normal	15	75	20	0	trap	100	0	0	0	0	0		selected-pokemon
+bite	dark	60	100	25	0	none	0	30	0	0	0	0		selected-pokemon
+blast-burn	fire	150	90	5	0	none	0	0	0	0	0	0		selected-pokemon
+blaze-kick	fire	85	90	10	0	burn	10	0	0	0	0	0		selected-pokemon
+blizzard	ice	120	70	5	0	freeze	10	0	0	0	0	0		all-opponents
+block	normal	0	-1	5	0	none	0	0	0	0	0	0		selected-pokemon
+body-slam	normal	85	100	15	0	paralysis	30	0	0	0	0	0		selected-pokemon
+bone-club	ground	65	85	20	0	none	0	10	0	0	0	0		selected-pokemon
+bone-rush	ground	25	80	10	0	none	0	0	0	0	2	5		selected-pokemon
+bonemerang	ground	50	90	10	0	none	0	0	0	0	2	2		selected-pokemon
+bounce	flying	85	85	5	0	paralysis	30	0	0	0	0	0		selected-pokemon
+brick-break	fighting	75	100	15	0	none	0	0	0	0	0	0		selected-pokemon
+bubble	water	20	100	30	0	none	0	0	0	0	0	0	speed:-1	all-opponents
+bubble-beam	water	65	100	20	0	none	0	0	0	0	0	0	speed:-1	selected-pokemon
+bulk-up	fighting	0	-1	20	0	none	0	0	0	0	0	0	attack:1;defense:1	user
+bullet-seed	grass	10	100	30	0	none	0	0	0	0	2	5		selected-pokemon
+calm-mind	psychic	0	-1	20	0	none	0	0	0	0	0	0	special-attack:1;special-defense:1	user
+camouflage	normal	0	-1	20	0	none	0	0	0	0	0	0		user
+charge	electric	0	-1	20	0	none	0	0	0	0	0	0	special-defense:1	user
+charm	normal	0	100	20	0	none	0	0	0	0	0	0	attack:-2	selected-pokemon
+clamp	water	35	75	10	0	trap	100	0	0	0	0	0		selected-pokemon
+comet-punch	normal	18	85	15	0	none	0	0	0	0	2	5		selected-pokemon
+confuse-ray	ghost	0	100	10	0	confusion	0	0	0	0	0	0		selected-pokemon
+confusion	psychic	50	100	25	0	confusion	10	0	0	0	0	0		selected-pokemon
+constrict	normal	10	100	35	0	none	0	0	0	0	0	0	speed:-1	selected-pokemon
+conversion	normal	0	-1	30	0	none	0	0	0	0	0	0		user
+conversion-2	normal	0	-1	30	0	none	0	0	0	0	0	0		selected-pokemon
+cosmic-power	psychic	0	-1	20	0	none	0	0	0	0	0	0	defense:1;special-defense:1	user
+cotton-spore	grass	0	85	40	0	none	0	0	0	0	0	0	speed:-2	all-opponents
+counter	fighting	0	100	20	-5	none	0	0	0	0	0	0		specific-move
+covet	normal	40	100	40	0	none	0	0	0	0	0	0		selected-pokemon
+crabhammer	water	90	85	10	0	none	0	0	0	0	0	0		selected-pokemon
+cross-chop	fighting	100	80	5	0	none	0	0	0	0	0	0		selected-pokemon
+crunch	dark	80	100	15	0	none	0	0	0	0	0	0	defense:-1	selected-pokemon
+crush-claw	normal	75	95	10	0	none	0	0	0	0	0	0	defense:-1	selected-pokemon
+curse	unknown	0	-1	10	0	none	0	0	0	0	0	0		specific-move
+cut	normal	50	95	30	0	none	0	0	0	0	0	0		selected-pokemon
+defense-curl	normal	0	-1	40	0	none	0	0	0	0	0	0	defense:1	user
+destiny-bond	ghost	0	-1	5	0	none	0	0	0	0	0	0		user
+detect	fighting	0	-1	5	4	none	0	0	0	0	0	0		user
+dig	ground	60	100	10	0	none	0	0	0	0	0	0		selected-pokemon
+disable	normal	0	55	20	0	disable	0	0	0	0	0	0		selected-pokemon
+dive	water	60	100	10	0	none	0	0	0	0	0	0		selected-pokemon
+dizzy-punch	normal	70	100	10	0	confusion	20	0	0	0	0	0		selected-pokemon
+doom-desire	steel	120	85	5	0	none	0	0	0	0	0	0		selected-pokemon
+double-edge	normal	120	100	15	0	none	0	0	-33	0	0	0		selected-pokemon
+double-kick	fighting	30	100	30	0	none	0	0	0	0	2	2		selected-pokemon
+double-slap	normal	15	85	10	0	none	0	0	0	0	2	5		selected-pokemon
+double-team	normal	0	-1	15	0	none	0	0	0	0	0	0	evasion:1	user
+dragon-breath	dragon	60	100	20	0	paralysis	30	0	0	0	0	0		selected-pokemon
+dragon-claw	dragon	80	100	15	0	none	0	0	0	0	0	0		selected-pokemon
+dragon-dance	dragon	0	-1	20	0	none	0	0	0	0	0	0	attack:1;speed:1	user
+dragon-rage	dragon	0	100	10	0	none	0	0	0	0	0	0		selected-pokemon
+dream-eater	psychic	100	100	15	0	none	0	0	50	0	0	0		selected-pokemon
+drill-peck	flying	80	100	20	0	none	0	0	0	0	0	0		selected-pokemon
+dynamic-punch	fighting	100	50	5	0	confusion	100	0	0	0	0	0		selected-pokemon
+earthquake	ground	100	100	10	0	none	0	0	0	0	0	0		all-other-pokemon
+egg-bomb	normal	100	75	10	0	none	0	0	0	0	0	0		selected-pokemon
+ember	fire	40	100	25	0	burn	10	0	0	0	0	0		selected-pokemon
+encore	normal	0	100	5	0	none	0	0	0	0	0	0		selected-pokemon
+endeavor	normal	0	100	5	0	none	0	0	0	0	0	0		selected-pokemon
+endure	normal	0	-1	10	4	none	0	0	0	0	0	0		user
+eruption	fire	150	100	5	0	none	0	0	0	0	0	0		all-opponents
+explosion	normal	250	100	5	0	none	0	0	0	0	0	0		all-other-pokemon
+extrasensory	psychic	80	100	30	0	none	0	10	0	0	0	0		selected-pokemon
+extreme-speed	normal	80	100	5	2	none	0	0	0	0	0	0		selected-pokemon
+facade	normal	70	100	20	0	none	0	0	0	0	0	0		selected-pokemon
+fake-out	normal	40	100	10	3	none	0	100	0	0	0	0		selected-pokemon
+fake-tears	dark	0	100	20	0	none	0	0	0	0	0	0	special-defense:-2	selected-pokemon
+false-swipe	normal	40	100	40	0	none	0	0	0	0	0	0		selected-pokemon
+feather-dance	flying	0	100	15	0	none	0	0	0	0	0	0	attack:-2	selected-pokemon
+feint-attack	dark	60	-1	20	0	none	0	0	0	0	0	0		selected-pokemon
+fire-blast	fire	120	85	5	0	burn	10	0	0	0	0	0		selected-pokemon
+fire-punch	fire	75	100	15	0	burn	10	0	0	0	0	0		selected-pokemon
+fire-spin	fire	15	70	15	0	trap	100	0	0	0	0	0		selected-pokemon
+fissure	ground	0	30	5	0	none	0	0	0	0	0	0		selected-pokemon
+flail	normal	0	100	15	0	none	0	0	0	0	0	0		selected-pokemon
+flame-wheel	fire	60	100	25	0	burn	10	0	0	0	0	0		selected-pokemon
+flamethrower	fire	95	100	15	0	burn	10	0	0	0	0	0		selected-pokemon
+flash	normal	0	70	20	0	none	0	0	0	0	0	0	accuracy:-1	selected-pokemon
+flatter	dark	0	100	15	0	confusion	0	0	0	0	0	0	special-attack:1	selected-pokemon
+fly	flying	70	95	15	0	none	0	0	0	0	0	0		selected-pokemon
+focus-energy	normal	0	-1	30	0	none	0	0	0	0	0	0		user
+focus-punch	fighting	150	100	20	-3	none	0	0	0	0	0	0		selected-pokemon
+follow-me	normal	0	-1	20	2	none	0	0	0	0	0	0		user
+foresight	normal	0	-1	40	0	no-type-immunity	0	0	0	0	0	0		selected-pokemon
+frenzy-plant	grass	150	90	5	0	none	0	0	0	0	0	0		selected-pokemon
+frustration	normal	0	100	20	0	none	0	0	0	0	0	0		selected-pokemon
+fury-attack	normal	15	85	20	0	none	0	0	0	0	2	5		selected-pokemon
+fury-cutter	bug	10	95	20	0	none	0	0	0	0	0	0		selected-pokemon
+fury-swipes	normal	18	80	15	0	none	0	0	0	0	2	5		selected-pokemon
+future-sight	psychic	80	90	15	0	none	0	0	0	0	0	0		selected-pokemon
+giga-drain	grass	60	100	5	0	none	0	0	50	0	0	0		selected-pokemon
+glare	normal	0	75	30	0	paralysis	0	0	0	0	0	0		selected-pokemon
+grass-whistle	grass	0	55	15	0	sleep	0	0	0	0	0	0		selected-pokemon
+growl	normal	0	100	40	0	none	0	0	0	0	0	0	attack:-1	all-opponents
+growth	normal	0	-1	40	0	none	0	0	0	0	0	0	attack:1;special-attack:1	user
+grudge	ghost	0	-1	5	0	none	0	0	0	0	0	0		user
+guillotine	normal	0	30	5	0	none	0	0	0	0	0	0		selected-pokemon
+gust	flying	40	100	35	0	none	0	0	0	0	0	0		selected-pokemon
+hail	ice	0	-1	10	0	none	0	0	0	0	0	0		entire-field
+harden	normal	0	-1	30	0	none	0	0	0	0	0	0	defense:1	user
+haze	ice	0	-1	30	0	none	0	0	0	0	0	0		entire-field
+headbutt	normal	70	100	15	0	none	0	30	0	0	0	0		selected-pokemon
+heal-bell	normal	0	-1	5	0	none	0	0	0	0	0	0		user-and-allies
+heat-wave	fire	100	90	10	0	burn	10	0	0	0	0	0		all-opponents
+helping-hand	normal	0	-1	20	5	none	0	0	0	0	0	0		ally
+hidden-power	normal	1	100	15	0	none	0	0	0	0	0	0		selected-pokemon
+high-jump-kick	fighting	85	90	20	0	none	0	0	0	0	0	0		selected-pokemon
+horn-attack	normal	65	100	25	0	none	0	0	0	0	0	0		selected-pokemon
+horn-drill	normal	0	30	5	0	none	0	0	0	0	0	0		selected-pokemon
+howl	normal	0	-1	40	0	none	0	0	0	0	0	0	attack:1	user-and-allies
+hydro-cannon	water	150	90	5	0	none	0	0	0	0	0	0		selected-pokemon
+hydro-pump	water	120	80	5	0	none	0	0	0	0	0	0		selected-pokemon
+hyper-beam	normal	150	90	5	0	none	0	0	0	0	0	0		selected-pokemon
+hyper-fang	normal	80	90	15	0	none	0	10	0	0	0	0		selected-pokemon
+hyper-voice	normal	90	100	10	0	none	0	0	0	0	0	0		all-opponents
+hypnosis	psychic	0	60	20	0	sleep	0	0	0	0	0	0		selected-pokemon
+ice-ball	ice	30	90	20	0	none	0	0	0	0	0	0		selected-pokemon
+ice-beam	ice	95	100	10	0	freeze	10	0	0	0	0	0		selected-pokemon
+ice-punch	ice	75	100	15	0	freeze	10	0	0	0	0	0		selected-pokemon
+icicle-spear	ice	10	100	30	0	none	0	0	0	0	2	5		selected-pokemon
+icy-wind	ice	55	95	15	0	none	0	0	0	0	0	0	speed:-1	all-opponents
+imprison	psychic	0	-1	10	0	none	0	0	0	0	0	0		user
+ingrain	grass	0	-1	20	0	ingrain	0	0	0	0	0	0		user
+iron-defense	steel	0	-1	15	0	none	0	0	0	0	0	0	defense:2	user
+iron-tail	steel	100	75	15	0	none	0	0	0	0	0	0	defense:-1	selected-pokemon
+jump-kick	fighting	70	95	25	0	none	0	0	0	0	0	0		selected-pokemon
+karate-chop	fighting	50	100	25	0	none	0	0	0	0	0	0		selected-pokemon
+kinesis	psychic	0	80	15	0	none	0	0	0	0	0	0	accuracy:-1	selected-pokemon
+knock-off	dark	20	100	20	0	none	0	0	0	0	0	0		selected-pokemon
+leaf-blade	grass	70	100	15	0	none	0	0	0	0	0	0		selected-pokemon
+leech-life	bug	20	100	15	0	none	0	0	50	0	0	0		selected-pokemon
+leech-seed	grass	0	90	10	0	leech-seed	0	0	0	0	0	0		selected-pokemon
+leer	normal	0	100	30	0	none	0	0	0	0	0	0	defense:-1	all-opponents
+lick	ghost	20	100	30	0	paralysis	30	0	0	0	0	0		selected-pokemon
+light-screen	psychic	0	-1	30	0	none	0	0	0	0	0	0		users-field
+lock-on	normal	0	-1	5	0	none	0	0	0	0	0	0		selected-pokemon
+lovely-kiss	normal	0	75	10	0	sleep	0	0	0	0	0	0		selected-pokemon
+low-kick	fighting	0	100	20	0	none	0	0	0	0	0	0		selected-pokemon
+luster-purge	psychic	95	100	5	0	none	0	0	0	0	0	0	special-defense:-1	selected-pokemon
+mach-punch	fighting	40	100	30	1	none	0	0	0	0	0	0		selected-pokemon
+magic-coat	psychic	0	-1	15	4	none	0	0	0	0	0	0		user
+magical-leaf	grass	60	-1	20	0	none	0	0	0	0	0	0		selected-pokemon
+magnitude	ground	0	100	30	0	none	0	0	0	0	0	0		all-other-pokemon
+mean-look	normal	0	-1	5	0	none	0	0	0	0	0	0		selected-pokemon
+meditate	psychic	0	-1	40	0	none	0	0	0	0	0	0	attack:1	user
+mega-drain	grass	40	100	10	0	none	0	0	50	0	0	0		selected-pokemon
+mega-kick	normal	120	75	5	0	none	0	0	0	0	0	0		selected-pokemon
+mega-punch	normal	80	85	20	0	none	0	0	0	0	0	0		selected-pokemon
+megahorn	bug	120	85	10	0	none	0	0	0	0	0	0		selected-pokemon
+memento	dark	0	100	10	0	none	0	0	0	0	0	0	attack:-2;special-attack:-2	selected-pokemon
+metal-claw	steel	50	95	35	0	none	0	0	0	0	0	0	attack:1	selected-pokemon
+metal-sound	steel	0	85	40	0	none	0	0	0	0	0	0	special-defense:-2	selected-pokemon
+meteor-mash	steel	100	85	10	0	none	0	0	0	0	0	0	attack:1	selected-pokemon
+metronome	normal	0	-1	10	0	none	0	0	0	0	0	0		user
+milk-drink	normal	0	-1	5	0	none	0	0	0	50	0	0		user
+mimic	normal	0	-1	10	0	none	0	0	0	0	0	0		selected-pokemon
+mind-reader	normal	0	-1	40	0	none	0	0	0	0	0	0		selected-pokemon
+minimize	normal	0	-1	20	0	none	0	0	0	0	0	0	evasion:2	user
+mirror-coat	psychic	0	100	20	-5	none	0	0	0	0	0	0		specific-move
+mirror-move	flying	0	-1	20	0	none	0	0	0	0	0	0		selected-pokemon
+mist	ice	0	-1	30	0	none	0	0	0	0	0	0		users-field
+mist-ball	psychic	70	100	5	0	none	0	0	0	0	0	0	special-attack:-1	selected-pokemon
+moonlight	normal	0	-1	5	0	none	0	0	0	50	0	0		user
+morning-sun	normal	0	-1	5	0	none	0	0	0	50	0	0		user
+mud-shot	ground	55	95	15	0	none	0	0	0	0	0	0	speed:-1	selected-pokemon
+mud-slap	ground	20	100	10	0	none	0	0	0	0	0	0	accuracy:-1	selected-pokemon
+mud-sport	ground	0	-1	15	0	none	0	0	0	0	0	0		entire-field
+muddy-water	water	95	85	10	0	none	0	0	0	0	0	0	accuracy:-1	all-opponents
+nature-power	normal	0	-1	20	0	none	0	0	0	0	0	0		selected-pokemon
+needle-arm	grass	60	100	15	0	none	0	30	0	0	0	0		selected-pokemon
+night-shade	ghost	0	100	15	0	none	0	0	0	0	0	0		selected-pokemon
+nightmare	ghost	0	100	15	0	nightmare	0	0	0	0	0	0		selected-pokemon
+octazooka	water	65	85	10	0	none	0	0	0	0	0	0	accuracy:-1	selected-pokemon
+odor-sleuth	normal	0	-1	40	0	no-type-immunity	0	0	0	0	0	0		selected-pokemon
+outrage	dragon	90	100	15	0	none	0	0	0	0	0	0		random-opponent
+overheat	fire	140	90	5	0	none	0	0	0	0	0	0	special-attack:-2	selected-pokemon
+pain-split	normal	0	-1	20	0	none	0	0	0	0	0	0		selected-pokemon
+pay-day	normal	40	100	20	0	none	0	0	0	0	0	0		selected-pokemon
+peck	flying	35	100	35	0	none	0	0	0	0	0	0		selected-pokemon
+perish-song	normal	0	-1	5	0	perish-song	0	0	0	0	0	0		all-pokemon
+petal-dance	grass	70	100	20	0	none	0	0	0	0	0	0		random-opponent
+pin-missile	bug	14	85	20	0	none	0	0	0	0	2	5		selected-pokemon
+poison-fang	poison	50	100	15	0	poison	50	0	0	0	0	0		selected-pokemon
+poison-gas	poison	0	55	40	0	poison	0	0	0	0	0	0		all-opponents
+poison-powder	poison	0	75	35	0	poison	0	0	0	0	0	0		selected-pokemon
+poison-sting	poison	15	100	35	0	poison	30	0	0	0	0	0		selected-pokemon
+poison-tail	poison	50	100	25	0	poison	10	0	0	0	0	0		selected-pokemon
+pound	normal	40	100	35	0	none	0	0	0	0	0	0		selected-pokemon
+powder-snow	ice	40	100	25	0	freeze	10	0	0	0	0	0		all-opponents
+present	normal	0	90	15	0	none	0	0	0	0	0	0		selected-pokemon
+protect	normal	0	-1	10	4	none	0	0	0	0	0	0		user
+psybeam	psychic	65	100	20	0	confusion	10	0	0	0	0	0		selected-pokemon
+psych-up	normal	0	-1	10	0	none	0	0	0	0	0	0		selected-pokemon
+psychic	psychic	90	100	10	0	none	0	0	0	0	0	0	special-defense:-1	selected-pokemon
+psycho-boost	psychic	140	90	5	0	none	0	0	0	0	0	0	special-attack:-2	selected-pokemon
+psywave	psychic	0	80	15	0	none	0	0	0	0	0	0		selected-pokemon
+pursuit	dark	40	100	20	0	none	0	0	0	0	0	0		selected-pokemon
+quick-attack	normal	40	100	30	1	none	0	0	0	0	0	0		selected-pokemon
+rage	normal	20	100	20	0	none	0	0	0	0	0	0		selected-pokemon
+rain-dance	water	0	-1	5	0	none	0	0	0	0	0	0		entire-field
+rapid-spin	normal	20	100	40	0	none	0	0	0	0	0	0	speed:1	selected-pokemon
+razor-leaf	grass	55	95	25	0	none	0	0	0	0	0	0		all-opponents
+razor-wind	normal	80	100	10	0	none	0	0	0	0	0	0		all-opponents
+recover	normal	0	-1	20	0	none	0	0	0	50	0	0		user
+recycle	normal	0	-1	10	0	none	0	0	0	0	0	0		user
+reflect	psychic	0	-1	20	0	none	0	0	0	0	0	0		users-field
+refresh	normal	0	-1	20	0	none	0	0	0	0	0	0		user
+rest	psychic	0	-1	5	0	none	0	0	0	0	0	0		user
+return	normal	0	100	20	0	none	0	0	0	0	0	0		selected-pokemon
+revenge	fighting	60	100	10	-4	none	0	0	0	0	0	0		selected-pokemon
+reversal	fighting	0	100	15	0	none	0	0	0	0	0	0		selected-pokemon
+roar	normal	0	100	20	-6	none	0	0	0	0	0	0		selected-pokemon
+rock-blast	rock	25	80	10	0	none	0	0	0	0	2	5		selected-pokemon
+rock-slide	rock	75	90	10	0	none	0	30	0	0	0	0		all-opponents
+rock-smash	fighting	20	100	15	0	none	0	0	0	0	0	0	defense:-1	selected-pokemon
+rock-throw	rock	50	90	15	0	none	0	0	0	0	0	0		selected-pokemon
+rock-tomb	rock	50	80	10	0	none	0	0	0	0	0	0	speed:-1	selected-pokemon
+role-play	psychic	0	-1	10	0	none	0	0	0	0	0	0		selected-pokemon
+rolling-kick	fighting	60	85	15	0	none	0	30	0	0	0	0		selected-pokemon
+rollout	rock	30	90	20	0	none	0	0	0	0	0	0		selected-pokemon
+sacred-fire	fire	100	95	5	0	burn	50	0	0	0	0	0		selected-pokemon
+safeguard	normal	0	-1	25	0	none	0	0	0	0	0	0		users-field
+sand-attack	ground	0	100	15	0	none	0	0	0	0	0	0	accuracy:-1	selected-pokemon
+sand-tomb	ground	15	70	15	0	trap	100	0	0	0	0	0		selected-pokemon
+sandstorm	rock	0	-1	10	0	none	0	0	0	0	0	0		entire-field
+scary-face	normal	0	90	10	0	none	0	0	0	0	0	0	speed:-2	selected-pokemon
+scratch	normal	40	100	35	0	none	0	0	0	0	0	0		selected-pokemon
+screech	normal	0	85	40	0	none	0	0	0	0	0	0	defense:-2	selected-pokemon
+secret-power	normal	70	100	20	0	none	30	0	0	0	0	0		selected-pokemon
+seismic-toss	fighting	0	100	20	0	none	0	0	0	0	0	0		selected-pokemon
+self-destruct	normal	200	100	5	0	none	0	0	0	0	0	0		all-other-pokemon
+shadow-ball	ghost	80	100	15	0	none	0	0	0	0	0	0	special-defense:-1	selected-pokemon
+shadow-blast	shadow	80	100	0	0	none	0	0	0	0	0	0		selected-pokemon
+shadow-blitz	shadow	40	100	0	0	none	0	0	0	0	0	0		selected-pokemon
+shadow-bolt	shadow	75	100	0	0	none	0	0	0	0	0	0		selected-pokemon
+shadow-break	shadow	75	100	0	0	none	0	0	0	0	0	0		selected-pokemon
+shadow-chill	shadow	75	100	0	0	none	0	0	0	0	0	0		selected-pokemon
+shadow-down	shadow	0	100	0	0	none	0	0	0	0	0	0		opponents-field
+shadow-end	shadow	120	60	0	0	none	0	0	0	0	0	0		selected-pokemon
+shadow-fire	shadow	75	100	0	0	none	0	0	0	0	0	0		selected-pokemon
+shadow-half	shadow	0	100	0	0	none	0	0	0	0	0	0		entire-field
+shadow-hold	shadow	0	-1	0	0	none	0	0	0	0	0	0		opponents-field
+shadow-mist	shadow	0	100	0	0	none	0	0	0	0	0	0		opponents-field
+shadow-panic	shadow	0	90	0	0	none	0	0	0	0	0	0		opponents-field
+shadow-punch	ghost	60	-1	20	0	none	0	0	0	0	0	0		selected-pokemon
+shadow-rave	shadow	70	100	0	0	none	0	0	0	0	0	0		opponents-field
+shadow-rush	shadow	55	100	0	0	none	0	0	0	0	0	0		selected-pokemon
+shadow-shed	shadow	0	-1	0	0	none	0	0	0	0	0	0		entire-field
+shadow-sky	shadow	0	-1	0	0	none	0	0	0	0	0	0		entire-field
+shadow-storm	shadow	95	100	0	0	none	0	0	0	0	0	0		opponents-field
+shadow-wave	shadow	50	100	0	0	none	0	0	0	0	0	0		opponents-field
+sharpen	normal	0	-1	30	0	none	0	0	0	0	0	0	attack:1	user
+sheer-cold	ice	0	30	5	0	none	0	0	0	0	0	0		selected-pokemon
+shock-wave	electric	60	-1	20	0	none	0	0	0	0	0	0		selected-pokemon
+signal-beam	bug	75	100	15	0	confusion	10	0	0	0	0	0		selected-pokemon
+silver-wind	bug	60	100	5	0	none	0	0	0	0	0	0	attack:1;defense:1;special-attack:1;special-defense:1;speed:1	selected-pokemon
+sing	normal	0	55	15	0	sleep	0	0	0	0	0	0		selected-pokemon
+sketch	normal	0	-1	1	0	none	0	0	0	0	0	0		selected-pokemon
+skill-swap	psychic	0	-1	10	0	none	0	0	0	0	0	0		selected-pokemon
+skull-bash	normal	100	100	15	0	none	100	0	0	0	0	0		selected-pokemon
+sky-attack	flying	140	90	5	0	none	0	30	0	0	0	0		selected-pokemon
+sky-uppercut	fighting	85	90	15	0	none	0	0	0	0	0	0		selected-pokemon
+slack-off	normal	0	-1	5	0	none	0	0	0	50	0	0		user
+slam	normal	80	75	20	0	none	0	0	0	0	0	0		selected-pokemon
+slash	normal	70	100	20	0	none	0	0	0	0	0	0		selected-pokemon
+sleep-powder	grass	0	75	15	0	sleep	0	0	0	0	0	0		selected-pokemon
+sleep-talk	normal	0	-1	10	0	none	0	0	0	0	0	0		user
+sludge	poison	65	100	20	0	poison	30	0	0	0	0	0		selected-pokemon
+sludge-bomb	poison	90	100	10	0	poison	30	0	0	0	0	0		selected-pokemon
+smelling-salts	normal	60	100	10	0	none	0	0	0	0	0	0		selected-pokemon
+smog	poison	20	70	20	0	poison	40	0	0	0	0	0		selected-pokemon
+smokescreen	normal	0	100	20	0	none	0	0	0	0	0	0	accuracy:-1	selected-pokemon
+snatch	dark	0	-1	10	4	none	0	0	0	0	0	0		user
+snore	normal	40	100	15	0	none	0	30	0	0	0	0		selected-pokemon
+soft-boiled	normal	0	-1	5	0	none	0	0	0	50	0	0		user
+solar-beam	grass	120	100	10	0	none	0	0	0	0	0	0		selected-pokemon
+sonic-boom	normal	0	90	20	0	none	0	0	0	0	0	0		selected-pokemon
+spark	electric	65	100	20	0	paralysis	30	0	0	0	0	0		selected-pokemon
+spider-web	bug	0	-1	10	0	none	0	0	0	0	0	0		selected-pokemon
+spike-cannon	normal	20	100	15	0	none	0	0	0	0	2	5		selected-pokemon
+spikes	ground	0	-1	20	0	none	0	0	0	0	0	0		opponents-field
+spit-up	normal	0	100	10	0	none	0	0	0	0	0	0		selected-pokemon
+spite	ghost	0	100	10	0	none	0	0	0	0	0	0		selected-pokemon
+splash	normal	0	-1	40	0	none	0	0	0	0	0	0		user
+spore	grass	0	100	15	0	sleep	0	0	0	0	0	0		selected-pokemon
+steel-wing	steel	70	90	25	0	none	0	0	0	0	0	0	defense:1	selected-pokemon
+stockpile	normal	0	-1	10	0	none	0	0	0	0	0	0	defense:1;special-defense:1	user
+stomp	normal	65	100	20	0	none	0	30	0	0	0	0		selected-pokemon
+strength	normal	80	100	15	0	none	0	0	0	0	0	0		selected-pokemon
+string-shot	bug	0	95	40	0	none	0	0	0	0	0	0	speed:-2	all-opponents
+struggle	normal	50	-1	1	0	none	0	0	0	-25	0	0		random-opponent
+stun-spore	grass	0	75	30	0	paralysis	0	0	0	0	0	0		selected-pokemon
+submission	fighting	80	80	25	0	none	0	0	-25	0	0	0		selected-pokemon
+substitute	normal	0	-1	10	0	none	0	0	0	0	0	0		user
+sunny-day	fire	0	-1	5	0	none	0	0	0	0	0	0		entire-field
+super-fang	normal	0	90	10	0	none	0	0	0	0	0	0		selected-pokemon
+superpower	fighting	120	100	5	0	none	0	0	0	0	0	0	attack:-1;defense:-1	selected-pokemon
+supersonic	normal	0	55	20	0	confusion	0	0	0	0	0	0		selected-pokemon
+surf	water	95	100	15	0	none	0	0	0	0	0	0		all-other-pokemon
+swagger	normal	0	90	15	0	confusion	0	0	0	0	0	0	attack:2	selected-pokemon
+swallow	normal	0	-1	10	0	none	0	0	0	25	0	0		user
+sweet-kiss	normal	0	75	10	0	confusion	0	0	0	0	0	0		selected-pokemon
+sweet-scent	normal	0	100	20	0	none	0	0	0	0	0	0	evasion:-2	all-opponents
+swift	normal	60	-1	20	0	none	0	0	0	0	0	0		all-opponents
+swords-dance	normal	0	-1	30	0	none	0	0	0	0	0	0	attack:2	user
+synthesis	grass	0	-1	5	0	none	0	0	0	50	0	0		user
+tackle	normal	35	95	35	0	none	0	0	0	0	0	0		selected-pokemon
+tail-glow	bug	0	-1	20	0	none	0	0	0	0	0	0	special-attack:3	user
+tail-whip	normal	0	100	30	0	none	0	0	0	0	0	0	defense:-1	all-opponents
+take-down	normal	90	85	20	0	none	0	0	-25	0	0	0		selected-pokemon
+taunt	dark	0	100	20	0	none	0	0	0	0	0	0		selected-pokemon
+teeter-dance	normal	0	100	20	0	confusion	0	0	0	0	0	0		all-other-pokemon
+teleport	psychic	0	-1	20	-6	none	0	0	0	0	0	0		user
+thief	dark	40	100	10	0	none	0	0	0	0	0	0		selected-pokemon
+thrash	normal	90	100	20	0	none	0	0	0	0	0	0		random-opponent
+thunder	electric	120	70	10	0	paralysis	30	0	0	0	0	0		selected-pokemon
+thunder-punch	electric	75	100	15	0	paralysis	10	0	0	0	0	0		selected-pokemon
+thunder-shock	electric	40	100	30	0	paralysis	10	0	0	0	0	0		selected-pokemon
+thunder-wave	electric	0	100	20	0	paralysis	0	0	0	0	0	0		selected-pokemon
+thunderbolt	electric	95	100	15	0	paralysis	10	0	0	0	0	0		selected-pokemon
+tickle	normal	0	100	20	0	none	0	0	0	0	0	0	attack:-1;defense:-1	selected-pokemon
+torment	dark	0	100	15	0	torment	0	0	0	0	0	0		selected-pokemon
+toxic	poison	0	85	10	0	poison	0	0	0	0	0	0		selected-pokemon
+transform	normal	0	-1	10	0	none	0	0	0	0	0	0		selected-pokemon
+tri-attack	normal	80	100	10	0	unknown	20	0	0	0	0	0		selected-pokemon
+trick	psychic	0	100	10	0	none	0	0	0	0	0	0		selected-pokemon
+triple-kick	fighting	10	90	10	0	none	0	0	0	0	3	3		selected-pokemon
+twineedle	bug	25	100	20	0	poison	20	0	0	0	2	2		selected-pokemon
+twister	dragon	40	100	20	0	none	0	20	0	0	0	0		all-opponents
+uproar	normal	50	100	10	0	none	0	0	0	0	0	0		random-opponent
+vice-grip	normal	55	100	30	0	none	0	0	0	0	0	0		selected-pokemon
+vine-whip	grass	35	100	10	0	none	0	0	0	0	0	0		selected-pokemon
+vital-throw	fighting	70	-1	10	-1	none	0	0	0	0	0	0		selected-pokemon
+volt-tackle	electric	120	100	15	0	paralysis	10	0	-33	0	0	0		selected-pokemon
+water-gun	water	40	100	25	0	none	0	0	0	0	0	0		selected-pokemon
+water-pulse	water	60	100	20	0	confusion	20	0	0	0	0	0		selected-pokemon
+water-sport	water	0	-1	15	0	none	0	0	0	0	0	0		entire-field
+water-spout	water	150	100	5	0	none	0	0	0	0	0	0		all-opponents
+waterfall	water	80	100	15	0	none	0	20	0	0	0	0		selected-pokemon
+weather-ball	normal	50	100	10	0	none	0	0	0	0	0	0		selected-pokemon
+whirlpool	water	15	70	15	0	trap	100	0	0	0	0	0		selected-pokemon
+whirlwind	normal	0	100	20	-6	none	0	0	0	0	0	0		selected-pokemon
+will-o-wisp	fire	0	75	15	0	burn	0	0	0	0	0	0		selected-pokemon
+wing-attack	flying	60	100	35	0	none	0	0	0	0	0	0		selected-pokemon
+wish	normal	0	-1	10	0	none	0	0	0	0	0	0		user
+withdraw	water	0	-1	40	0	none	0	0	0	0	0	0	defense:1	user
+wrap	normal	15	85	20	0	trap	100	0	0	0	0	0		selected-pokemon
+yawn	normal	0	-1	10	0	yawn	0	0	0	0	0	0		selected-pokemon
+zap-cannon	electric	100	50	5	0	paralysis	100	0	0	0	0	0		selected-pokemon
