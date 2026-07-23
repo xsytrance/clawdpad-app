@@ -400,10 +400,15 @@ class Battle(val dex: Dex, left: List<Mon>, right: List<Mon>, seed: Long = 0,
     }
 
     /** play one turn with the human's chosen left move; AI picks for the right. */
-    fun stepInteractive(leftMove: String) {
+    fun stepInteractive(leftMove: String) = stepTurn(leftMove, chooseMove(right, left))
+
+    /** PvP: both moves supplied by humans (the two-phone duel). */
+    fun stepPvp(leftMove: String, rightMove: String) = stepTurn(leftMove, rightMove)
+
+    private fun stepTurn(leftMove: String, rightMove: String) {
         if (over) return
         left.tookDamage = false; right.tookDamage = false
-        val picks = mapOf(left to leftMove, right to chooseMove(right, left))
+        val picks = mapOf(left to leftMove, right to rightMove)
         val order = picks.keys.sortedWith(compareByDescending<Mon> { dex.moves[picks[it]]!!.priority }
                 .thenByDescending { it.effSpeed() }.thenBy { rng.nextDouble() })
         for (a in order) {
