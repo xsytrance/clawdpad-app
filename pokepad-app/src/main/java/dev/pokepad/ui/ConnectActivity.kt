@@ -81,8 +81,12 @@ class ConnectActivity : AppCompatActivity() {
         if (snapped) {
             streamer.secondIdx = second
             if (streamer.scene is PokeBlockScene) return   // already battling
+            // if you've loaded your save, YOUR mon lead the block battles
+            val factories: List<() -> dev.pokepad.core.Mon> =
+                dev.pokepad.save.SaveData.truth?.party?.filter { it.species != null }
+                    ?.map { sm -> { dev.pokepad.save.SaveData.mon(sm) } } ?: emptyList()
             Host.setScene(PokeBlockScene(System.currentTimeMillis(),
-                onLog = { line -> runOnUiThread { status.text = line } }))
+                onLog = { line -> runOnUiThread { status.text = line } }, playerFactories = factories))
         } else {
             streamer.secondIdx = -1
             (streamer.scene as? PokeBlockScene)?.abort()

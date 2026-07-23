@@ -1,6 +1,7 @@
 package dev.pokepad.block
 
 import dev.pokepad.core.Director
+import dev.pokepad.core.Mon
 import dev.pokepad.core.PokeData
 import dev.pokepad.core.Reel
 import java.util.Random
@@ -16,6 +17,9 @@ import java.util.Random
 class PokeBlockScene(
     seedBase: Long,
     private val onLog: (String) -> Unit = {},
+    /** if non-empty, each fight leads with one of YOUR real save mon (built
+     *  fresh each round so battle state never carries over). Empty = all random. */
+    private val playerFactories: List<() -> Mon> = emptyList(),
 ) : Scene {
 
     private val WW = 15
@@ -31,10 +35,12 @@ class PokeBlockScene(
     override fun done() = exit
 
     private fun newReel(): Reel? = try {
-        val ids = PokeData.speciesIds
-        val a = ids[rng.nextInt(ids.size)]
-        var b = ids[rng.nextInt(ids.size)]; while (b == a) b = ids[rng.nextInt(ids.size)]
-        val r = Director.build(PokeData.dex(), a, b, rng.nextLong())
+        val dex = PokeData.dex(); val ids = PokeData.speciesIds
+        val aMon = if (playerFactories.isNotEmpty()) playerFactories[rng.nextInt(playerFactories.size)]()
+                   else { val s = ids[rng.nextInt(ids.size)]; Mon(dex, s, moves = Director.movesetFor(dex, s)) }
+        var bs = ids[rng.nextInt(ids.size)]; while (bs == aMon.species.name) bs = ids[rng.nextInt(ids.size)]
+        val bMon = Mon(dex, bs, moves = Director.movesetFor(dex, bs))
+        val r = Director.build(dex, aMon, bMon, rng.nextLong())
         onLog("⚔️ ${r.leftName} vs ${r.rightName} — ${r.winnerName} wins!")
         r
     } catch (e: Exception) { onLog("battle failed: ${e.message}"); null }
