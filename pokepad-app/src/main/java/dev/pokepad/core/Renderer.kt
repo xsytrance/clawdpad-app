@@ -84,13 +84,17 @@ object Renderer {
     private val FACE_FEATURES = setOf("grin", "cheeks", "whiskers", "gem", "antennae", "crest", "ears")
 
     fun render(shape: String, types: List<String>, features: List<String>, t: Int = -1, back: Boolean = false, species: String? = null): Frame {
-        // hand-authored hero art (front view only) beats the procedural archetype
-        if (species != null && !back && HeroArt.has(species)) {
-            val fr = Frame()
-            System.arraycopy(HeroArt.px(species)!!, 0, fr.px, 0, W * W)
-            outline(fr)
-            if (t >= 0 && (t % 8) >= 4) shiftV(fr, -1)   // breathing bob
-            return fr
+        // hand-authored hero art beats the procedural archetype (front or back);
+        // if a back view is requested but not drawn yet, fall through to procedural.
+        if (species != null) {
+            val raw = if (back) HeroArt.pxBack(species) else HeroArt.px(species)
+            if (raw != null) {
+                val fr = Frame()
+                System.arraycopy(raw, 0, fr.px, 0, W * W)
+                outline(fr)
+                if (t >= 0 && (t % 8) >= 4) shiftV(fr, -1)   // breathing bob
+                return fr
+            }
         }
         val fr = Frame()
         val body = TYPE_COLOR[types[0]] ?: 0xBEB4A0
