@@ -9,6 +9,8 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <application
         android:allowBackup="true"
@@ -51,6 +53,11 @@
         <activity
             android:name=".ui.TrainerActivity"
             android:exported="false"
+            android:screenOrientation="portrait" />
+
+        <activity
+            android:name=".ui.DuelActivity"
+            android:exported="true"
             android:screenOrientation="portrait" />
 
         <service

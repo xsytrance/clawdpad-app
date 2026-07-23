@@ -71,6 +71,11 @@ class MainActivity : AppCompatActivity() {
             startActivity(Intent(this, TrainerActivity::class.java))
         }, lp(top = 34).also { it.width = dp(300); it.height = dp(60) })
 
+        // the crown: two phones, two blocks, one battle
+        root.addView(bigButton("👑  2-PLAYER DUEL", CARD, GOLD) {
+            startActivity(Intent(this, DuelActivity::class.java))
+        }, lp(top = 12).also { it.width = dp(300); it.height = dp(56) })
+
         // watch a quick auto-battle
         root.addView(bigButton("⚔  QUICK BATTLE", CARD, INK) {
             startActivity(Intent(this, BattleActivity::class.java))   // random matchup
