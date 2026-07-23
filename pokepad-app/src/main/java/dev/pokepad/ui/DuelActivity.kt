@@ -64,7 +64,9 @@ class DuelActivity : AppCompatActivity() {
     private lateinit var prompt: TextView
     private lateinit var grid: GridLayout
     private lateinit var again: TextView
+    private lateinit var mic: TextView
     private val moveBtns = ArrayList<TextView>()
+    private lateinit var commander: VoiceCommander
 
     private var server: DuelServer? = null
     private var client: DuelClient? = null
@@ -231,6 +233,23 @@ class DuelActivity : AppCompatActivity() {
         }
         battlePanel.addView(grid, LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT,
             LinearLayout.LayoutParams.WRAP_CONTENT).apply { topMargin = dp(8); gravity = Gravity.CENTER_HORIZONTAL })
+        commander = VoiceCommander(this,
+            onStatus = { s -> ui.post { if (s.isNotEmpty()) prompt.text = s } },
+            onMove = { m -> ui.post { pick(m) } })
+        mic = TextView(this).apply {
+            text = "🎤  VOICE MODE: OFF"; setTextColor(GOLD); textSize = 14f; gravity = Gravity.CENTER
+            setTypeface(typeface, Typeface.BOLD); setPadding(0, dp(12), 0, dp(12))
+            background = GradientDrawable().apply { cornerRadius = dp(12).toFloat(); setColor(Color.parseColor("#182042")); setStroke(dp(1), GOLD) }
+            isClickable = true; isFocusable = true
+            setOnClickListener {
+                val on = commander.toggle()
+                mic.text = if (on) "🎤  VOICE MODE: ON" else "🎤  VOICE MODE: OFF"
+                if (on && grid.visibility == View.VISIBLE)
+                    commander.menuShown(listOf(mySpec.nickname, mySpec.species), side?.myMoves() ?: emptyList())
+            }
+        }
+        battlePanel.addView(mic, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT).apply { topMargin = dp(10) })
         again = TextView(this).apply {
             text = "▶  REMATCH"; setTextColor(INK); textSize = 16f; gravity = Gravity.CENTER
             setTypeface(typeface, Typeface.BOLD); visibility = View.GONE
@@ -279,16 +298,18 @@ class DuelActivity : AppCompatActivity() {
             } else btn.visibility = View.INVISIBLE
         }
         setMenu(true)
+        commander.menuShown(listOf(mySpec.nickname, mySpec.species), moves)
         if (autoplay && moves.isNotEmpty()) ui.postDelayed({ pick(moves[0]) }, 500)
     }
 
     private fun pick(move: String) { setMenu(false); side?.chooseMove(move) }
 
     private fun showResult(won: Boolean) {
+        arena.showVerdict(won)
         prompt.text = if (won) "YOU WON! 🏆" else "you lost… rematch?"
         prompt.setTextColor(if (won) GOLD else INK)
         setMenu(false); again.visibility = View.VISIBLE
-        if (autoplay) ui.postDelayed({ if (!isFinishing) rematch() }, 2000)
+        if (autoplay) ui.postDelayed({ if (!isFinishing) rematch() }, 6000)   // let the verdict breathe in demo mode
     }
 
     private fun rematch() {
@@ -297,10 +318,15 @@ class DuelActivity : AppCompatActivity() {
         prompt.text = "waiting for the next round…"
     }
 
-    private fun setMenu(show: Boolean) { grid.visibility = if (show) View.VISIBLE else View.GONE }
+    private fun setMenu(show: Boolean) {
+        grid.visibility = if (show) View.VISIBLE else View.GONE
+        mic.visibility = if (show) View.VISIBLE else View.GONE
+        if (!show) commander.menuHidden()
+    }
 
     override fun onDestroy() {
         super.onDestroy()
+        commander.stop()
         server?.stop(); client?.stop()
         mirror?.abort(); if (mirror != null) Host.setScene(null)
     }

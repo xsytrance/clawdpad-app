@@ -41,11 +41,17 @@ class TrainerView(context: Context) : View(context) {
     private var bgShader: LinearGradient? = null
     private fun dp(v: Float) = v * resources.displayMetrics.density
 
+    /** end-of-battle verdict overlay: null = none, true = victory, false = defeat */
+    @Volatile var verdictWin: Boolean? = null
+
     /** play a turn's reel; onDone fires once it finishes (held on the last frame) */
     fun play(r: Reel, onDone: () -> Unit) {
         reel = r; leftBmp = r.cells.map { Sprite.bitmap(it.left) }; rightBmp = r.cells.map { Sprite.bitmap(it.right) }
+        verdictWin = null
         startNanos = 0L; fired = false; onReelDone = onDone; invalidate()
     }
+
+    fun showVerdict(won: Boolean) { verdictWin = won; invalidate() }
 
     override fun onSizeChanged(w: Int, h: Int, ow: Int, oh: Int) {
         bgShader = LinearGradient(0f, 0f, 0f, h.toFloat(), BG_TOP, BG_BOT, Shader.TileMode.CLAMP)
@@ -80,8 +86,27 @@ class TrainerView(context: Context) : View(context) {
         text.color = INK; text.textSize = dp(15f); text.textAlign = Paint.Align.LEFT
         canvas.drawText(c.msg, dp(24f), mbTop + dp(30f), text)
         if (c.banner.isNotEmpty() && c.bannerHot) {
-            text.color = GOLD; text.textSize = dp(30f); text.textAlign = Paint.Align.CENTER
+            text.color = GOLD; text.textSize = dp(if (c.banner.length > 8) 22f else 30f)
+            text.textAlign = Paint.Align.CENTER
             canvas.drawText(c.banner, w / 2f, h * 0.46f, text)
+        }
+
+        // ── unmistakable end-of-battle verdict ──
+        verdictWin?.let { won ->
+            fill.color = Color.parseColor(if (won) "#B0060B18" else "#C0100608")
+            canvas.drawRect(0f, 0f, w, h, fill)
+            val boxW = w * 0.84f; val boxH = dp(150f)
+            val bx = (w - boxW) / 2f; val by = h * 0.34f
+            round(canvas, bx, by, bx + boxW, by + boxH, dp(20f),
+                Color.parseColor(if (won) "#1A2408" else "#240A0A"),
+                if (won) GOLD else Color.parseColor("#E5533F"), dp(3f))
+            text.textAlign = Paint.Align.CENTER
+            text.color = if (won) GOLD else Color.parseColor("#F0A090")
+            text.textSize = dp(40f)
+            canvas.drawText(if (won) "🏆 VICTORY!" else "💥 DEFEAT", w / 2f, by + dp(66f), text)
+            text.color = if (won) INK else DIM; text.textSize = dp(16f)
+            canvas.drawText(if (won) "your Pokémon wins the battle!" else "your Pokémon fainted…",
+                w / 2f, by + dp(104f), text)
         }
 
         if (finished) {

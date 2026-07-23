@@ -50,6 +50,7 @@ class TrainerActivity : AppCompatActivity() {
     private lateinit var b: Mon
     private var maxL = 1f; private var maxR = 1f
     private val turnEvents = ArrayList<Ev>()
+    private lateinit var commander: VoiceCommander
 
     private fun dp(v: Int) = (v * resources.displayMetrics.density).toInt()
 
@@ -82,11 +83,14 @@ class TrainerActivity : AppCompatActivity() {
             })
         }
         panel.addView(grid, LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { topMargin = dp(8); gravity = Gravity.CENTER_HORIZONTAL })
+        commander = VoiceCommander(this,
+            onStatus = { s -> runOnUiThread { if (s.isNotEmpty()) prompt.text = s } },
+            onMove = { m -> runOnUiThread { onMove(m) } })
         mic = TextView(this).apply {
-            text = "🎤  SPEAK YOUR COMMAND"; setTextColor(GOLD); textSize = 14f; gravity = Gravity.CENTER
+            text = "🎤  VOICE MODE: OFF"; setTextColor(GOLD); textSize = 14f; gravity = Gravity.CENTER
             setTypeface(typeface, Typeface.BOLD); setPadding(0, dp(12), 0, dp(12))
             background = GradientDrawable().apply { cornerRadius = dp(12).toFloat(); setColor(Color.parseColor("#182042")); setStroke(dp(1), GOLD) }
-            isClickable = true; isFocusable = true; setOnClickListener { onMic() }
+            isClickable = true; isFocusable = true; setOnClickListener { onMicToggle() }
         }
         panel.addView(mic, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { topMargin = dp(10) })
         again = TextView(this).apply {
@@ -149,10 +153,12 @@ class TrainerActivity : AppCompatActivity() {
             } else btn.visibility = View.INVISIBLE
         }
         setMenu(true)
+        commander.menuShown(listOf(a.name, a.species.name), moves)
     }
 
     private fun showResult() {
         val youWon = battle.winner === a
+        arena.showVerdict(youWon)
         prompt.text = if (youWon) "You won! ${a.name} is victorious! 🏆" else "${b.name} won… ${a.name} fainted."
         prompt.setTextColor(if (youWon) GOLD else INK)
         setMenu(false); again.visibility = View.VISIBLE
@@ -161,46 +167,28 @@ class TrainerActivity : AppCompatActivity() {
     private fun setMenu(show: Boolean) {
         grid.visibility = if (show) View.VISIBLE else View.GONE
         mic.visibility = if (show) View.VISIBLE else View.GONE
+        if (!show) commander.menuHidden()
     }
 
-    // ── voice command ─────────────────────────────────────────────────────────
-    private fun onMic() {
-        if (battle.over) return
+    // ── voice mode ────────────────────────────────────────────────────────────
+    private fun onMicToggle() {
         if (!Voice.available(this)) { toast("voice input isn't available on this device"); return }
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.RECORD_AUDIO), 7); return
         }
-        prompt.text = "🎤 listening…"
-        Voice.listen(this, onState = { s -> prompt.text = s }, onResult = { hyps ->
-            val m = matchMove(hyps, battle.leftMoves())
-            if (m != null) onMove(m)
-            else { prompt.text = "didn't catch a move — say it again or tap one"; }
-        })
+        val on = commander.toggle()
+        mic.text = if (on) "🎤  VOICE MODE: ON" else "🎤  VOICE MODE: OFF"
+        if (on && grid.visibility == View.VISIBLE)
+            commander.menuShown(listOf(a.name, a.species.name), battle.leftMoves())
+        else if (!on) prompt.text = "What will ${a.name} do?"
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == 7 && grantResults.firstOrNull() == PackageManager.PERMISSION_GRANTED) onMic()
+        if (requestCode == 7 && grantResults.firstOrNull() == PackageManager.PERMISSION_GRANTED) onMicToggle()
     }
 
-    /** match spoken hypotheses ("use flamethrower", "fly!") to a legal move */
-    private fun matchMove(hyps: List<String>, moves: List<String>): String? {
-        fun norm(s: String) = s.lowercase().replace(Regex("[^a-z]"), "")
-        val nm = moves.map { it to norm(it.replace("-", " ")) }
-        for (h in hyps) {
-            val hn = norm(h)
-            for ((m, mn) in nm) if (mn.isNotEmpty() && (hn.contains(mn) || (hn.length >= 3 && mn.contains(hn)))) return m
-        }
-        // token overlap fallback ("thunder" → thunderbolt / thunder-wave)
-        for (h in hyps) {
-            val toks = h.lowercase().split(Regex("[^a-z]+")).filter { it.length >= 3 }.toSet()
-            for ((m, _) in nm) {
-                val mtoks = m.replace("-", " ").lowercase().split(" ").filter { it.length >= 3 }.toSet()
-                if (toks.any { it in mtoks }) return m
-            }
-        }
-        return null
-    }
+    override fun onDestroy() { super.onDestroy(); commander.stop() }
 
     private fun toast(s: String) = Toast.makeText(this, s, Toast.LENGTH_SHORT).show()
 

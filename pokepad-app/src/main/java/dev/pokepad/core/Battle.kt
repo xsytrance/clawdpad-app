@@ -20,6 +20,12 @@ val SELF_KO = setOf("explosion", "self-destruct")
 val AILMENT = mapOf("burn" to "brn", "poison" to "psn", "paralysis" to "par", "freeze" to "frz",
         "sleep" to "slp", "toxic" to "tox", "confusion" to "confusion")
 
+/** Battle pacing: effective HP pool multiplier. Stats/damage stay REAL Gen-III
+ *  (facts are sacred) — this stretches the HP bar so fights breathe like the
+ *  anime instead of ending in two hits. Residual burn/toxic scale with maxHp,
+ *  so they stay proportionally correct. 1 = authentic, 2 = epic (default). */
+const val HP_PACE = 2
+
 class Move(val name: String, val type: String, val power: Int, val accuracy: Int, val pp: Int,
            val priority: Int, val ailment: String, val ailmentChance: Int, val flinch: Int,
            val drain: Int, val healing: Int, val minHits: Int, val maxHits: Int,
@@ -105,7 +111,7 @@ class Mon(val dex: Dex, speciesName: String, val level: Int = 50,
                 "spa" to species.spa, "spd" to species.spd, "spe" to species.spe)) {
             stats[k] = Engine.statCalc(base, iv[k] ?: 31, ev[k] ?: 0, level, k == "hp", natMul(nature, k))
         }
-        maxHp = stats["hp"]!!; hp = maxHp
+        maxHp = stats["hp"]!! * HP_PACE; hp = maxHp
     }
 
     val name get() = nickname ?: species.name.replaceFirstChar { it.uppercase() }

@@ -131,7 +131,7 @@ object Director {
                 cur.remove(ev.side)
                 gap(1)
             }
-            is Ev.Win -> { msg = "${cap(ev.species)} wins!"; repeat(16) { compose(ev.side, idle(ev.species, gt).px.copyOf(), "WIN", true) } }
+            is Ev.Win -> { msg = "${cap(ev.species)} wins!"; repeat(16) { compose(ev.side, idle(ev.species, gt).px.copyOf(), "${cap(ev.species).uppercase()} WINS", true) } }
         }
 
         return Reel(cells, cap(leftSp), cap(rightSp), winnerName)
