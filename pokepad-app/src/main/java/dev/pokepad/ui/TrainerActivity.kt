@@ -188,6 +188,8 @@ class TrainerActivity : AppCompatActivity() {
         if (requestCode == 7 && grantResults.firstOrNull() == PackageManager.PERMISSION_GRANTED) onMicToggle()
     }
 
+    override fun onResume() { super.onResume(); Music.play(this, "music_battle") }
+    override fun onPause() { super.onPause(); Music.stop() }
     override fun onDestroy() { super.onDestroy(); commander.stop() }
 
     private fun toast(s: String) = Toast.makeText(this, s, Toast.LENGTH_SHORT).show()

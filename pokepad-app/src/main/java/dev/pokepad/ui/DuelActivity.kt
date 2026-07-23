@@ -107,6 +107,26 @@ class DuelActivity : AppCompatActivity() {
         }
     }
 
+    private lateinit var fighterLine: TextView
+    private lateinit var changeBtn: TextView
+    private var fighterIdx = 0   // index into party; party.size = random
+
+    private fun cycleFighter() {
+        val party = SaveData.truth?.party?.filter { it.species != null } ?: emptyList()
+        fighterIdx = (fighterIdx + 1) % (party.size + 1)
+        mySpec = if (fighterIdx < party.size) {
+            val sm = party[fighterIdx]
+            val m = SaveData.mon(sm)
+            Proto.MonSpec(sm.species!!, sm.level, sm.nickname, sm.ability, sm.nature, sm.ivs, sm.evs, m.moves)
+        } else randomSpec()
+        refreshFighterLine()
+    }
+
+    private fun refreshFighterLine() {
+        val tag = if (fighterIdx >= (SaveData.truth?.party?.count { it.species != null } ?: 0)) " (random)" else ""
+        fighterLine.text = "Your fighter: ${mySpec.nickname} (${cap(mySpec.species)} Lv${mySpec.level})$tag\nSame wifi, one hosts, one joins."
+    }
+
     private fun currentCell(): Cell? {
         val r = curReel ?: return null
         val i = (((System.currentTimeMillis() - reelStart) / (1000.0 / Director.FPS)).toInt())
@@ -120,6 +140,10 @@ class DuelActivity : AppCompatActivity() {
             val m = SaveData.mon(sm)
             return Proto.MonSpec(sm.species!!, sm.level, sm.nickname, sm.ability, sm.nature, sm.ivs, sm.evs, m.moves)
         }
+        return randomSpec()
+    }
+
+    private fun randomSpec(): Proto.MonSpec {
         val ids = PokeData.speciesIds
         val sp = ids[rng.nextInt(ids.size)]
         return Proto.MonSpec(sp, 50, sp.replaceFirstChar { it.uppercase() }, null, "hardy",
@@ -139,10 +163,13 @@ class DuelActivity : AppCompatActivity() {
             setTypeface(typeface, Typeface.BOLD); gravity = Gravity.CENTER
         }
         lobby.addView(lobbyTitle, lp(0))
-        lobby.addView(TextView(this).apply {
-            text = "Your fighter: ${mySpec.nickname} (${cap(mySpec.species)} Lv${mySpec.level})\nSame wifi, one hosts, one joins."
+        fighterLine = TextView(this).apply {
             setTextColor(DIM); textSize = 14f; gravity = Gravity.CENTER
-        }, lp(10).also { it.width = dp(300) })
+        }
+        lobby.addView(fighterLine, lp(10).also { it.width = dp(300) })
+        changeBtn = bigBtn("⟳  CHANGE FIGHTER", CARD) { cycleFighter() }
+        lobby.addView(changeBtn, lp(10).also { it.width = dp(300); it.height = dp(44) })
+        refreshFighterLine()
         lobbyStatus = TextView(this).apply { text = ""; setTextColor(INK); textSize = 15f; gravity = Gravity.CENTER }
         lobby.addView(lobbyStatus, lp(18).also { it.width = dp(300) })
 
@@ -167,6 +194,7 @@ class DuelActivity : AppCompatActivity() {
         isHost = true; searching = false
         server?.stop(); client?.stop()
         hostBtn.visibility = View.GONE; joinBtn.visibility = View.GONE; ipRow.visibility = View.GONE
+        changeBtn.visibility = View.GONE
         lobbyStatus.text = "Waiting for a challenger…\nTell them to tap JOIN.\n(your address: ${localIp()})"
         val core = HostCore(PokeData.dex(), mySpec, System.currentTimeMillis(),
             send = { l -> server?.send(l) },
@@ -186,6 +214,7 @@ class DuelActivity : AppCompatActivity() {
         isHost = false; searching = true
         server?.stop(); client?.stop()
         hostBtn.visibility = View.GONE; joinBtn.visibility = View.GONE; ipRow.visibility = View.VISIBLE
+        changeBtn.visibility = View.GONE
         lobbyStatus.text = "Searching for a host on your wifi…"
         scan()
     }
@@ -226,6 +255,7 @@ class DuelActivity : AppCompatActivity() {
         side = null; curReel = null
         showLobby()
         hostBtn.visibility = View.VISIBLE; joinBtn.visibility = View.VISIBLE; ipRow.visibility = View.GONE
+        changeBtn.visibility = View.VISIBLE
         lobbyStatus.text = "$msg\nready when you are."
     }
 
@@ -290,8 +320,14 @@ class DuelActivity : AppCompatActivity() {
             LinearLayout.LayoutParams.MATCH_PARENT))
     }
 
-    private fun showLobby() { lobby.visibility = View.VISIBLE; battleBox.visibility = View.GONE; inBattle = false }
-    private fun showBattle() { lobby.visibility = View.GONE; battleBox.visibility = View.VISIBLE; inBattle = true }
+    private fun showLobby() {
+        lobby.visibility = View.VISIBLE; battleBox.visibility = View.GONE; inBattle = false
+        Music.play(this, "music_menu", 0.35f)
+    }
+    private fun showBattle() {
+        if (!inBattle) Music.play(this, "music_battle")
+        lobby.visibility = View.GONE; battleBox.visibility = View.VISIBLE; inBattle = true
+    }
 
     @Deprecated("Deprecated in Java")
     override fun onBackPressed() {
@@ -358,6 +394,12 @@ class DuelActivity : AppCompatActivity() {
         grid.visibility = if (show) View.VISIBLE else View.GONE
         mic.visibility = if (show) View.VISIBLE else View.GONE
         if (!show) commander.menuHidden()
+    }
+
+    override fun onPause() { super.onPause(); Music.stop() }
+    override fun onResume() {
+        super.onResume()
+        Music.play(this, if (inBattle) "music_battle" else "music_menu", if (inBattle) 0.45f else 0.35f)
     }
 
     override fun onDestroy() {

@@ -73,18 +73,19 @@ object Proto {
     // ── events ───────────────────────────────────────────────────────────────
     fun evToStr(e: Ev): String = when (e) {
         is Ev.SendIn -> "send,${e.side},${e.species},${clean(e.name)}"
-        is Ev.Used -> "used,${e.side},${e.species},${e.move},${e.dmg},${e.eff}"
-        is Ev.Faint -> "faint,${e.side},${e.species}"
-        is Ev.Win -> "win,${e.side},${e.species}"
+        is Ev.Used -> "used,${e.side},${e.species},${e.move},${e.dmg},${e.eff},${clean(e.name)}"
+        is Ev.Faint -> "faint,${e.side},${e.species},${clean(e.name)}"
+        is Ev.Win -> "win,${e.side},${e.species},${clean(e.name)}"
     }
     fun evFromStr(s: String): Ev? {
         val f = s.split(","); if (f.size < 3) return null
         return when (f[0]) {
             "send" -> Ev.SendIn(f[1], f[2], f.getOrElse(3) { f[2] })
             "used" -> Ev.Used(f[1], f[2], f.getOrElse(3) { "" },
-                f.getOrNull(4)?.toIntOrNull() ?: 0, f.getOrNull(5)?.toDoubleOrNull() ?: 1.0)
-            "faint" -> Ev.Faint(f[1], f[2])
-            "win" -> Ev.Win(f[1], f[2])
+                f.getOrNull(4)?.toIntOrNull() ?: 0, f.getOrNull(5)?.toDoubleOrNull() ?: 1.0,
+                f.getOrElse(6) { f[2] })
+            "faint" -> Ev.Faint(f[1], f[2], f.getOrElse(3) { f[2] })
+            "win" -> Ev.Win(f[1], f[2], f.getOrElse(3) { f[2] })
             else -> null
         }
     }

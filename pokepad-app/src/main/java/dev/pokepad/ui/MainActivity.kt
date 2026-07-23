@@ -106,11 +106,14 @@ class MainActivity : AppCompatActivity() {
         Insets.pad(root)
     }
 
+    override fun onPause() { super.onPause(); Music.stop() }
+
     private var teamBtn: TextView? = null
     private var blocksBtn: TextView? = null
 
     override fun onResume() {
         super.onResume()
+        Music.play(this, "music_menu", 0.35f)
         // live status on the buttons — the app tells you where it's at
         val t = dev.pokepad.save.SaveData.truth
         teamBtn?.text = if (t != null) "✨  MY TEAM — ${t.trainer.name} ✓" else "✨  MY TEAM (LOAD SAVE)"

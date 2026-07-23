@@ -111,7 +111,7 @@ object Director {
         for (ev in events) when (ev) {
             is Ev.SendIn -> {
                 cur[ev.side] = ev.species
-                msg = "${cap(ev.species)} appeared!"
+                msg = "${ev.name.ifBlank { cap(ev.species) }} appeared!"
                 cue = "summon"
                 for (t in 0 until Anim.SUMMON) compose(ev.side, Anim.summon(still(ev.species), t).px.copyOf(), "", false)
                 gap(2)
@@ -121,7 +121,7 @@ object Director {
                 // HP holds until the IMPACT frame, then drains over a few frames
                 val pre = if (defSide == "L") hpL else hpR
                 val post = (pre - ev.dmg).coerceAtLeast(0f)
-                msg = "${cap(ev.species)} used ${moveName(ev.move)}!"
+                msg = "${ev.name.ifBlank { cap(ev.species) }} used ${moveName(ev.move)}!"
                 val (banner, hot) = bannerFor(ev.eff, ev.move)
                 for (t in 0 until Anim.ATTACK) {
                     if (t == 4 && ev.dmg > 0)                            // impact frame
@@ -141,19 +141,21 @@ object Director {
                 gap(1)
             }
             is Ev.Faint -> {
-                msg = "${cap(ev.species)} fainted!"
+                msg = "${ev.name.ifBlank { cap(ev.species) }} fainted!"
                 cue = "faint"
                 for (t in 0 until Anim.FAINT) compose(ev.side, Anim.faint(still(ev.species), t).px.copyOf(), "", false)
                 cur.remove(ev.side)
                 gap(1)
             }
             is Ev.Win -> {
-                msg = "${cap(ev.species)} wins!"
+                val wname = ev.name.ifBlank { cap(ev.species) }
+                msg = "$wname wins!"
                 cue = if (ev.side == "L") "victory" else "defeat"   // L = the viewer's side
-                repeat(16) { compose(ev.side, idle(ev.species, gt).px.copyOf(), "${cap(ev.species).uppercase()} WINS", true) }
+                repeat(16) { compose(ev.side, idle(ev.species, gt).px.copyOf(), "${wname.uppercase()} WINS", true) }
             }
         }
 
+        if (cells.isEmpty()) { msg = "…nothing happened!"; gap(8) }   // e.g. both sides fully paralyzed
         return Reel(cells, cap(leftSp), cap(rightSp), winnerName)
     }
 }

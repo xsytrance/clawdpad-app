@@ -175,9 +175,10 @@ object Abilities {
 // ── battle events (typed sink for the renderer/Scene; default is no-op) ──────
 sealed class Ev {
     data class SendIn(val side: String, val species: String, val name: String) : Ev()
-    data class Used(val side: String, val species: String, val move: String, val dmg: Int, val eff: Double) : Ev()
-    data class Faint(val side: String, val species: String) : Ev()
-    data class Win(val side: String, val species: String) : Ev()
+    data class Used(val side: String, val species: String, val move: String, val dmg: Int, val eff: Double,
+                    val name: String = species) : Ev()
+    data class Faint(val side: String, val species: String, val name: String = species) : Ev()
+    data class Win(val side: String, val species: String, val name: String = species) : Ev()
 }
 
 // ── the battle (teams + switching) ──────────────────────────────────────────
@@ -323,7 +324,7 @@ class Battle(val dex: Dex, left: List<Mon>, right: List<Mon>, seed: Long = 0,
                 log("  ${a.name} was ${statusWord(cs)} by ${d.ability}!")
             }
         } else log("  ${a.name} used $nice.")
-        emit(Ev.Used(if (a === left) "L" else "R", a.species.name, moveName, dealt, lastEff))
+        emit(Ev.Used(if (a === left) "L" else "R", a.species.name, moveName, dealt, lastEff, a.name))
         if (!d.fainted) applyEffects(mv, a, d, dealt)
         if (moveName in RECHARGE && mv.power > 0) a.mustRecharge = true
         if (moveName in SELF_KO && mv.power > 0) a.hp = 0
@@ -344,7 +345,7 @@ class Battle(val dex: Dex, left: List<Mon>, right: List<Mon>, seed: Long = 0,
             val act = if (key == "L") left else right
             if (!act.fainted) continue
             log("  ${act.name} fainted!")
-            emit(Ev.Faint(key, act.species.name))
+            emit(Ev.Faint(key, act.species.name, act.name))
             if (sideAlive(team)) {
                 val foe = if (key == "L") right else left
                 val nxt = bestSwitch(team, foe)
@@ -356,7 +357,7 @@ class Battle(val dex: Dex, left: List<Mon>, right: List<Mon>, seed: Long = 0,
         }
         val la = sideAlive(ls); val ra = sideAlive(rs)
         if (!(la && ra)) { over = true; winner = if (la) left else if (ra) right else null
-            winner?.let { emit(Ev.Win(if (it === left) "L" else "R", it.species.name)) } }
+            winner?.let { emit(Ev.Win(if (it === left) "L" else "R", it.species.name, it.name)) } }
     }
 
     private fun endOfTurn(p: Mon) {

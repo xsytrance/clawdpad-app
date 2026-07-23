@@ -61,6 +61,7 @@ class TrainerView(context: Context) : View(context) {
 
     override fun onDraw(canvas: Canvas) {
         val r = reel ?: return
+        if (r.cells.isEmpty()) { if (!fired) { fired = true; onReelDone?.invoke() }; return }
         if (startNanos == 0L) startNanos = System.nanoTime()
         val elapsed = (System.nanoTime() - startNanos) / 1_000_000.0
         val last = r.cells.size - 1

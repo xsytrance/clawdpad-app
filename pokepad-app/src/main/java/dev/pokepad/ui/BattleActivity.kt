@@ -44,6 +44,9 @@ class BattleActivity : AppCompatActivity() {
 
     private var fromSave = false
 
+    override fun onResume() { super.onResume(); Music.play(this, "music_battle") }
+    override fun onPause() { super.onPause(); Music.stop() }
+
     private fun newBattle(left: String?, right: String?) {
         val dex = PokeData.dex()
         val ids = PokeData.speciesIds
