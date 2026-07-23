@@ -77,6 +77,7 @@ class PickerActivity : AppCompatActivity() {
         }, LinearLayout.LayoutParams(MATCH, WRAP).apply { topMargin = dp(18) })
 
         setContentView(scroll)
+        Insets.pad(root)
     }
 
     private fun tile(id: String, dex: dev.pokepad.core.Dex, cell: Int): LinearLayout {

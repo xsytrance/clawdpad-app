@@ -1,5 +1,7 @@
 package dev.pokepad.ui
 
+import android.Manifest
+import android.content.pm.PackageManager
 import android.graphics.Color
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
@@ -9,7 +11,10 @@ import android.view.View
 import android.widget.GridLayout
 import android.widget.LinearLayout
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import dev.pokepad.core.Battle
 import dev.pokepad.core.Director
 import dev.pokepad.core.Ev
@@ -36,6 +41,7 @@ class TrainerActivity : AppCompatActivity() {
     private lateinit var prompt: TextView
     private lateinit var grid: GridLayout
     private lateinit var again: TextView
+    private lateinit var mic: TextView
     private val moveBtns = ArrayList<TextView>()
 
     private lateinit var dex: dev.pokepad.core.Dex
@@ -76,6 +82,13 @@ class TrainerActivity : AppCompatActivity() {
             })
         }
         panel.addView(grid, LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { topMargin = dp(8); gravity = Gravity.CENTER_HORIZONTAL })
+        mic = TextView(this).apply {
+            text = "🎤  SPEAK YOUR COMMAND"; setTextColor(GOLD); textSize = 14f; gravity = Gravity.CENTER
+            setTypeface(typeface, Typeface.BOLD); setPadding(0, dp(12), 0, dp(12))
+            background = GradientDrawable().apply { cornerRadius = dp(12).toFloat(); setColor(Color.parseColor("#182042")); setStroke(dp(1), GOLD) }
+            isClickable = true; isFocusable = true; setOnClickListener { onMic() }
+        }
+        panel.addView(mic, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { topMargin = dp(10) })
         again = TextView(this).apply {
             text = "▶  NEW BATTLE"; setTextColor(INK); textSize = 16f; gravity = Gravity.CENTER
             setTypeface(typeface, Typeface.BOLD); visibility = View.GONE
@@ -87,6 +100,7 @@ class TrainerActivity : AppCompatActivity() {
         panel.addView(again, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { topMargin = dp(8) })
         root.addView(panel, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT))
         setContentView(root)
+        Insets.padBottom(panel)   // arena stays full-bleed; menu clears the nav bar
 
         startBattle()
     }
@@ -144,7 +158,51 @@ class TrainerActivity : AppCompatActivity() {
         setMenu(false); again.visibility = View.VISIBLE
     }
 
-    private fun setMenu(show: Boolean) { grid.visibility = if (show) View.VISIBLE else View.GONE }
+    private fun setMenu(show: Boolean) {
+        grid.visibility = if (show) View.VISIBLE else View.GONE
+        mic.visibility = if (show) View.VISIBLE else View.GONE
+    }
+
+    // ── voice command ─────────────────────────────────────────────────────────
+    private fun onMic() {
+        if (battle.over) return
+        if (!Voice.available(this)) { toast("voice input isn't available on this device"); return }
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.RECORD_AUDIO), 7); return
+        }
+        prompt.text = "🎤 listening…"
+        Voice.listen(this, onState = { s -> prompt.text = s }, onResult = { hyps ->
+            val m = matchMove(hyps, battle.leftMoves())
+            if (m != null) onMove(m)
+            else { prompt.text = "didn't catch a move — say it again or tap one"; }
+        })
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == 7 && grantResults.firstOrNull() == PackageManager.PERMISSION_GRANTED) onMic()
+    }
+
+    /** match spoken hypotheses ("use flamethrower", "fly!") to a legal move */
+    private fun matchMove(hyps: List<String>, moves: List<String>): String? {
+        fun norm(s: String) = s.lowercase().replace(Regex("[^a-z]"), "")
+        val nm = moves.map { it to norm(it.replace("-", " ")) }
+        for (h in hyps) {
+            val hn = norm(h)
+            for ((m, mn) in nm) if (mn.isNotEmpty() && (hn.contains(mn) || (hn.length >= 3 && mn.contains(hn)))) return m
+        }
+        // token overlap fallback ("thunder" → thunderbolt / thunder-wave)
+        for (h in hyps) {
+            val toks = h.lowercase().split(Regex("[^a-z]+")).filter { it.length >= 3 }.toSet()
+            for ((m, _) in nm) {
+                val mtoks = m.replace("-", " ").lowercase().split(" ").filter { it.length >= 3 }.toSet()
+                if (toks.any { it in mtoks }) return m
+            }
+        }
+        return null
+    }
+
+    private fun toast(s: String) = Toast.makeText(this, s, Toast.LENGTH_SHORT).show()
 
     private fun typeColor(type: String?): Int {
         val rgb = when (type) {

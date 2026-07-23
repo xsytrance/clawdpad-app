@@ -70,6 +70,7 @@ class ConnectActivity : AppCompatActivity() {
         }, lp(28).also { it.width = dp(300) })
 
         setContentView(root)
+        Insets.pad(root)
 
         Host.onStatus = { s -> runOnUiThread { status.text = s } }
         Host.onSnap = { snapped, second -> runOnUiThread { onSnap(snapped, second) } }

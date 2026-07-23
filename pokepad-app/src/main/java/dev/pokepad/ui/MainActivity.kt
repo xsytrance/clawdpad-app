@@ -94,6 +94,7 @@ class MainActivity : AppCompatActivity() {
         }, lp(top = 30))
 
         setContentView(scroll)
+        Insets.pad(root)
     }
 
     private fun lp(top: Int = 0): LinearLayout.LayoutParams =

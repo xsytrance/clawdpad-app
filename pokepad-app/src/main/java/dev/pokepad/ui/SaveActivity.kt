@@ -78,6 +78,7 @@ class SaveActivity : AppCompatActivity() {
         }, lp(28))
 
         setContentView(scroll)
+        Insets.pad(root)
         SaveData.truth?.let { showTeam(it) }   // keep showing after returning from a battle
     }
 

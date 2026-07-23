@@ -32,6 +32,15 @@ class BattleView(context: Context) : View(context) {
     var onToggleView: (() -> Unit)? = null
     var firstPerson = true
     private val toggleRect = RectF()
+    private var insetTop = 0f
+    private var insetBottom = 0f
+
+    init {
+        androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(this) { _, insets ->
+            val sb = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.systemBars())
+            insetTop = sb.top.toFloat(); insetBottom = sb.bottom.toFloat(); insets
+        }
+    }
 
     private val px = Paint().apply { isFilterBitmap = false; isAntiAlias = false }
     private val fill = Paint(Paint.ANTI_ALIAS_FLAG)
@@ -99,12 +108,12 @@ class BattleView(context: Context) : View(context) {
         drawSprite(canvas, rightBmp[i], oppCx - oppSize / 2, oppCyBase - oppSize, oppSize)
         drawSprite(canvas, leftBmp[i], plCx - plSize / 2, plCyBase - plSize, plSize)
 
-        // HP boxes
-        drawHpBox(canvas, dp(14f), dp(28f), w * 0.52f, r.rightName, c.hpR, alignRight = false)
+        // HP boxes (opponent box drops below the status bar)
+        drawHpBox(canvas, dp(14f), dp(28f) + insetTop, w * 0.52f, r.rightName, c.hpR, alignRight = false)
         drawHpBox(canvas, w - dp(14f) - w * 0.52f, h * 0.44f, w * 0.52f, r.leftName, c.hpL, alignRight = true)
 
-        // message box
-        val mbTop = h - dp(96f)
+        // message box (lifts above the nav bar)
+        val mbTop = h - dp(96f) - insetBottom
         roundRect(canvas, dp(12f), mbTop, w - dp(12f), h - dp(16f), dp(14f), BOX, BOX_LINE, dp(2f))
         text.color = INK; text.textSize = dp(16f); text.textAlign = Paint.Align.LEFT
         canvas.drawText(c.msg, dp(28f), mbTop + dp(34f), text)
@@ -121,11 +130,11 @@ class BattleView(context: Context) : View(context) {
         if (finished && elapsedMs > (last * (1000.0 / Director.FPS)) + 2600) {
             doneHold = true
             text.color = GOLD; text.textSize = dp(15f); text.textAlign = Paint.Align.CENTER
-            canvas.drawText("▶  TAP FOR A REMATCH", w / 2f, h - dp(52f), text)
+            canvas.drawText("▶  TAP FOR A REMATCH", w / 2f, h - dp(52f) - insetBottom, text)
         }
 
         // camera toggle (top-right, clear of the status bar)
-        toggleRect.set(w - dp(96f), dp(84f), w - dp(14f), dp(84f) + dp(34f))
+        toggleRect.set(w - dp(96f), dp(28f) + insetTop, w - dp(14f), dp(28f) + insetTop + dp(34f))
         roundRect(canvas, toggleRect.left, toggleRect.top, toggleRect.right, toggleRect.bottom, dp(9f), BOX, BOX_LINE, dp(2f))
         text.color = INK; text.textSize = dp(12f); text.textAlign = Paint.Align.CENTER
         canvas.drawText(if (firstPerson) "◉ 1ST" else "◫ SIDE", toggleRect.centerX(), toggleRect.centerY() + dp(4f), text)
