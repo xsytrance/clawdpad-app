@@ -34,6 +34,7 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         PokeData.ensure(this)   // load the dex once
+        Sfx.ensure(this)
 
         val scroll = ScrollView(this).apply { setBackgroundColor(BG); isFillViewport = true }
         val root = LinearLayout(this).apply {
@@ -118,7 +119,7 @@ class MainActivity : AppCompatActivity() {
                 setStroke(dp(1), Color.parseColor("#26314F"))
             }
             isClickable = true; isFocusable = true
-            setOnClickListener { onClick() }
+            setOnClickListener { Sfx.play("blip"); onClick() }
         }
     }
 

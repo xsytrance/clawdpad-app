@@ -40,6 +40,7 @@ class ConnectActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         PokeData.ensure(this)
+        Sfx.ensure(this)
         requestPerms()
 
         val root = LinearLayout(this).apply {
@@ -80,6 +81,7 @@ class ConnectActivity : AppCompatActivity() {
     private fun onSnap(snapped: Boolean, second: Int) {
         val streamer = Host.streamer ?: return
         if (snapped) {
+            Sfx.play("link")
             streamer.secondIdx = second
             if (streamer.scene is PokeBlockScene) return   // already battling
             // if you've loaded your save, YOUR mon lead the block battles

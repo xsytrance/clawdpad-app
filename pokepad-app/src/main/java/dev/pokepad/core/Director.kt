@@ -21,7 +21,9 @@ import java.util.Random
 /** one composite tick: the two blocks' creature pixels + HP + a shared banner */
 class Cell(val left: IntArray, val right: IntArray,
           val hpL: Float, val hpR: Float,
-          val banner: String, val bannerHot: Boolean, val msg: String)
+          val banner: String, val bannerHot: Boolean, val msg: String,
+          /** sound cue fired when playback reaches this cell ("" = none) */
+          val sfx: String = "")
 
 class Reel(val cells: List<Cell>, val leftName: String, val rightName: String, val winnerName: String)
 
@@ -85,8 +87,10 @@ object Director {
         var hpL = startHpL; var hpR = startHpR
         var gt = 0
         var msg = ""   // the message-box line; lingers through the following pause
+        var cue = ""   // one-shot sound cue for the NEXT pushed cell
         fun push(l: IntArray, r: IntArray, banner: String, hot: Boolean) {
-            cells.add(Cell(l, r, (hpL / maxL).coerceIn(0f, 1f), (hpR / maxR).coerceIn(0f, 1f), banner, hot, msg)); gt++
+            cells.add(Cell(l, r, (hpL / maxL).coerceIn(0f, 1f), (hpR / maxR).coerceIn(0f, 1f), banner, hot, msg, cue))
+            cue = ""; gt++
         }
         fun moveName(m: String) = m.replace("-", " ").replaceFirstChar { it.uppercase() }
         fun sideIdle(side: String) = cur[side]?.let { idle(it, gt).px.copyOf() } ?: IntArray(W * W)
@@ -108,6 +112,7 @@ object Director {
             is Ev.SendIn -> {
                 cur[ev.side] = ev.species
                 msg = "${cap(ev.species)} appeared!"
+                cue = "summon"
                 for (t in 0 until Anim.SUMMON) compose(ev.side, Anim.summon(still(ev.species), t).px.copyOf(), "", false)
                 gap(2)
             }
@@ -117,6 +122,8 @@ object Director {
                 msg = "${cap(ev.species)} used ${moveName(ev.move)}!"
                 val (banner, hot) = bannerFor(ev.eff, ev.move)
                 for (t in 0 until Anim.ATTACK) {
+                    if (t == 4 && ev.dmg > 0)                            // impact frame
+                        cue = when { ev.eff > 1.0 -> "super"; ev.eff < 1.0 -> "resist"; else -> "hit" }
                     val atk = Anim.attack(still(ev.species), t).px.copyOf()
                     val hurtT = t - 4
                     val def = if (ev.dmg > 0 && hurtT in 0 until Anim.HURT) Anim.hurt(still(cur[defSide]!!), hurtT).px.copyOf()
@@ -127,11 +134,16 @@ object Director {
             }
             is Ev.Faint -> {
                 msg = "${cap(ev.species)} fainted!"
+                cue = "faint"
                 for (t in 0 until Anim.FAINT) compose(ev.side, Anim.faint(still(ev.species), t).px.copyOf(), "", false)
                 cur.remove(ev.side)
                 gap(1)
             }
-            is Ev.Win -> { msg = "${cap(ev.species)} wins!"; repeat(16) { compose(ev.side, idle(ev.species, gt).px.copyOf(), "${cap(ev.species).uppercase()} WINS", true) } }
+            is Ev.Win -> {
+                msg = "${cap(ev.species)} wins!"
+                cue = if (ev.side == "L") "victory" else "defeat"   // L = the viewer's side
+                repeat(16) { compose(ev.side, idle(ev.species, gt).px.copyOf(), "${cap(ev.species).uppercase()} WINS", true) }
+            }
         }
 
         return Reel(cells, cap(leftSp), cap(rightSp), winnerName)

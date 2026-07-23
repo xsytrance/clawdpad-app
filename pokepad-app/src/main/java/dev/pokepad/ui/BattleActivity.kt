@@ -27,6 +27,7 @@ class BattleActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         PokeData.ensure(this)
+        Sfx.ensure(this)
 
         view = BattleView(this)
         view.onTapWhenDone = { newBattle(null, null) }

@@ -44,10 +44,12 @@ class TrainerView(context: Context) : View(context) {
     /** end-of-battle verdict overlay: null = none, true = victory, false = defeat */
     @Volatile var verdictWin: Boolean? = null
 
+    private var sfxAt = -1
+
     /** play a turn's reel; onDone fires once it finishes (held on the last frame) */
     fun play(r: Reel, onDone: () -> Unit) {
         reel = r; leftBmp = r.cells.map { Sprite.bitmap(it.left) }; rightBmp = r.cells.map { Sprite.bitmap(it.right) }
-        verdictWin = null
+        verdictWin = null; sfxAt = -1
         startNanos = 0L; fired = false; onReelDone = onDone; invalidate()
     }
 
@@ -65,6 +67,13 @@ class TrainerView(context: Context) : View(context) {
         val idx = (elapsed / (1000.0 / Director.FPS)).toInt()
         val finished = idx > last
         val c = r.cells[idx.coerceIn(0, last)]
+
+        // fire sound cues for every cell we've crossed since the last frame
+        val upTo = idx.coerceIn(0, last)
+        if (upTo > sfxAt) {
+            for (j in (sfxAt + 1)..upTo) r.cells[j].sfx.takeIf { it.isNotEmpty() }?.let { Sfx.play(it) }
+            sfxAt = upTo
+        }
 
         val w = width.toFloat(); val h = height.toFloat()
         fill.shader = bgShader; canvas.drawRect(0f, 0f, w, h, fill); fill.shader = null

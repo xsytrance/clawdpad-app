@@ -127,7 +127,7 @@ class VoiceCommander(
     }
 
     private fun ack() {
-        runCatching { tone?.startTone(android.media.ToneGenerator.TONE_PROP_ACK, 140) }
+        runCatching { Sfx.play("ack") }
         runCatching {
             val v = ctx.getSystemService(Context.VIBRATOR_SERVICE) as? android.os.Vibrator
             v?.vibrate(android.os.VibrationEffect.createOneShot(90, android.os.VibrationEffect.DEFAULT_AMPLITUDE))

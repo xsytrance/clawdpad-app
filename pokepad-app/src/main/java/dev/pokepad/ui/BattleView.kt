@@ -60,11 +60,13 @@ class BattleView(context: Context) : View(context) {
 
     private fun dp(v: Float) = v * resources.displayMetrics.density
 
+    private var sfxAt = -1
+
     fun load(r: Reel) {
         reel = r
         leftBmp = r.cells.map { Sprite.bitmap(it.left) }
         rightBmp = r.cells.map { Sprite.bitmap(it.right) }
-        startNanos = 0L; doneHold = false
+        startNanos = 0L; doneHold = false; sfxAt = -1
         invalidate()
     }
 
@@ -81,6 +83,10 @@ class BattleView(context: Context) : View(context) {
         val finished = idx > last
         val i = idx.coerceIn(0, last)
         val c = r.cells[i]
+        if (i > sfxAt) {   // fire sound cues for cells crossed since last frame
+            for (j in (sfxAt + 1)..i) r.cells[j].sfx.takeIf { it.isNotEmpty() }?.let { Sfx.play(it) }
+            sfxAt = i
+        }
 
         val w = width.toFloat(); val h = height.toFloat()
         // background

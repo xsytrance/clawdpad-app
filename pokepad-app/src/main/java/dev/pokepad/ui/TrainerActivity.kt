@@ -56,7 +56,7 @@ class TrainerActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        PokeData.ensure(this); SaveData.ensure(this)
+        PokeData.ensure(this); SaveData.ensure(this); Sfx.ensure(this)
         dex = PokeData.dex()
 
         val root = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setBackgroundColor(BG) }
@@ -76,7 +76,7 @@ class TrainerActivity : AppCompatActivity() {
                 textSize = 15f; setTextColor(INK); gravity = Gravity.CENTER; setTypeface(typeface, Typeface.BOLD)
                 isClickable = true; isFocusable = true
             }
-            btn.setOnClickListener { (btn.tag as? String)?.let { m -> onMove(m) } }
+            btn.setOnClickListener { (btn.tag as? String)?.let { m -> Sfx.play("blip"); onMove(m) } }
             moveBtns.add(btn)
             grid.addView(btn, GridLayout.LayoutParams().apply {
                 width = cellW; height = dp(58); setMargins(dp(4), dp(6), dp(4), dp(0))

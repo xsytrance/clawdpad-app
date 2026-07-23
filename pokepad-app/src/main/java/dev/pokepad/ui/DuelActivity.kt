@@ -84,7 +84,7 @@ class DuelActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        PokeData.ensure(this); SaveData.ensure(this)
+        PokeData.ensure(this); SaveData.ensure(this); Sfx.ensure(this)
         mySpec = pickMySpec()
         autoplay = intent.getStringExtra("autoplay") == "1"
 
@@ -225,7 +225,7 @@ class DuelActivity : AppCompatActivity() {
                 textSize = 15f; setTextColor(INK); gravity = Gravity.CENTER; setTypeface(typeface, Typeface.BOLD)
                 isClickable = true; isFocusable = true
             }
-            btn.setOnClickListener { (btn.tag as? String)?.let { m -> pick(m) } }
+            btn.setOnClickListener { (btn.tag as? String)?.let { m -> Sfx.play("blip"); pick(m) } }
             moveBtns.add(btn)
             grid.addView(btn, GridLayout.LayoutParams().apply {
                 width = cellW; height = dp(58); setMargins(dp(4), dp(6), dp(4), 0)
@@ -339,7 +339,7 @@ class DuelActivity : AppCompatActivity() {
         text = label; setTextColor(INK); textSize = 16f; setTypeface(typeface, Typeface.BOLD)
         gravity = Gravity.CENTER
         background = GradientDrawable().apply { cornerRadius = dp(16).toFloat(); setColor(bg); setStroke(dp(1), Color.parseColor("#26314F")) }
-        isClickable = true; isFocusable = true; setOnClickListener { onClick() }
+        isClickable = true; isFocusable = true; setOnClickListener { Sfx.play("blip"); onClick() }
     }
     private fun typeColor(type: String?): Int {
         val rgb = when (type) {
