@@ -63,6 +63,7 @@ class Streamer(
     private var hs2: HeapStreamer? = null
     private var idx2 = 1
     private var block2First = true
+    private var relayStall = 0
 
     private fun sendTo(bytes: ByteArray, idx: Int) {
         if (bytes.size > 6 && bytes[0] == 0xF0.toByte() && bytes[4] == 0x77.toByte())
@@ -143,7 +144,10 @@ class Streamer(
         val hs = HeapStreamer(9, 1); hs.adoptState()
         val t0 = System.currentTimeMillis()
         var first = true
+        var dbg = 0
         while (running) {
+            if ((dbg++ % 24) == 0)
+                android.util.Log.i("pokepad-relay", "acks=${blocks.acks} secondIdx=$secondIdx hs2=${hs2 != null} scene=${scene != null}")
             val t = (System.currentTimeMillis() - t0) / 1000.0
             val s = scene
             if (s != null && s.done()) scene = null
@@ -158,10 +162,20 @@ class Streamer(
                 if (hs2 == null) bootSecond(sidx)
                 val h = hs2
                 if (h != null) {
+                    // The relay through the master is lossy, and the heap-streamer
+                    // assumes lossless delivery — so a dropped packet silently strands
+                    // part of the frame (the "bottom third dark"). Fix: don't trust it.
+                    // Every iteration, RESEND the whole current frame starting from
+                    // block 2's REAL observed ACK, heavily paced. Any drop is simply
+                    // re-sent on the next pass, re-indexed to where block 2 actually is,
+                    // so it always converges on a complete image (a few fps, but whole).
+                    val obs = blocks.acks[sidx] ?: -1
                     val frameB = scene?.renderSecond(t) ?: frame
+                    if (block2First) { android.util.Log.i("pokepad-relay", "block2 first: ack=$obs"); block2First = false }
+                    h.seedIndex(if (obs >= 0) (obs + 1) and 0x3FF else idx2)
                     h.setBytes(PROGRAM_SIZE, BlockFrame.rgb565(frameB))
-                    if (block2First) { h.seedIndex(idx2); h.markUnknownFrameArea(PROGRAM_SIZE); block2First = false }
-                    for (pkt in h.drain()) sendTo(pkt, sidx)
+                    h.markUnknownFrameArea(PROGRAM_SIZE)
+                    val pkts = h.drain(); for (pkt in pkts) { sendTo(pkt, sidx); sleep(6) }
                     idx2 = h.packetIndex
                 }
             } else if (sidx < 0 && hs2 != null) {

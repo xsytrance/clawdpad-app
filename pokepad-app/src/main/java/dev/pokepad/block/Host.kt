@@ -10,6 +10,7 @@ import android.content.Intent
 import android.media.midi.MidiDevice
 import android.media.midi.MidiDeviceInfo
 import android.media.midi.MidiManager
+import android.os.Build
 import android.os.Handler
 import android.os.HandlerThread
 import android.os.IBinder
@@ -69,7 +70,7 @@ object Host {
             override fun onDeviceAdded(info: MidiDeviceInfo) {
                 say("block appeared — connecting")
                 retryDelay = 1000L
-                handler?.post { connect() }
+                handler?.post { connectTo(info) }   // use the exact device handed to us
             }
             override fun onDeviceRemoved(info: MidiDeviceInfo) {
                 say("block vanished — will reconnect when it returns")
@@ -99,23 +100,41 @@ object Host {
     }
 
     fun connect() {
-        val ctx = appCtx ?: return
         val m = midi ?: return
         if (connecting) return
         if (streamer?.isAlive == true && System.currentTimeMillis() - blocks.lastAckAt < 12_000) {
             say("hosting ${blocks.serial.ifEmpty { "your block" }} — connected")
             return
         }
-        val infos = m.devices
+        // getDevices() is deprecated and can miss a device that was already
+        // present at launch; getDevicesForTransport (API 33+) is reliable.
+        val infos: List<MidiDeviceInfo> = try {
+            if (Build.VERSION.SDK_INT >= 33)
+                m.getDevicesForTransport(MidiManager.TRANSPORT_MIDI_BYTE_STREAM).toList()
+                    .ifEmpty { m.devices.toList() }
+            else m.devices.toList()
+        } catch (e: Throwable) { m.devices.toList() }
+        android.util.Log.i("pokepad-conn", "midi devices: ${infos.size} -> " +
+            infos.joinToString { it.properties.getString(MidiDeviceInfo.PROPERTY_NAME) ?: "?" })
         val info = infos.firstOrNull {
             (it.properties.getString(MidiDeviceInfo.PROPERTY_NAME) ?: "")
-                .contains(Regex("light|block", RegexOption.IGNORE_CASE)) }
+                .contains(Regex("light|block|roli", RegexOption.IGNORE_CASE)) }
             ?: infos.firstOrNull { it.inputPortCount > 0 }
-        if (info == null) { say("no block in sight — plug in or bridge via MIDI BLE"); return }
+        if (info == null) { say("no block in sight — plug the block into the phone"); return }
+        connectTo(info)
+    }
+
+    /** open a specific MIDI device (from enumeration or the added-callback). */
+    fun connectTo(info: MidiDeviceInfo) {
+        val ctx = appCtx ?: return
+        val m = midi ?: return
+        if (connecting) return
+        if (streamer?.isAlive == true && System.currentTimeMillis() - blocks.lastAckAt < 12_000) return
         connecting = true
         say("opening ${info.properties.getString(MidiDeviceInfo.PROPERTY_NAME)}…")
         m.openDevice(info, { device: MidiDevice? ->
             val port = device?.openInputPort(0)
+            android.util.Log.i("pokepad-conn", "openDevice: device=${device != null} inPort=${port != null}")
             if (port == null) { connecting = false; say("port busy — retrying shortly"); reconnect(); return@openDevice }
             val asm = SysexAssembler({ sysex ->
                 Blocks.decode(sysex, blocks) { ev -> handler?.post { dispatchTouch(ev) } }

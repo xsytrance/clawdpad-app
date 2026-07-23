@@ -81,11 +81,7 @@ class ConnectActivity : AppCompatActivity() {
         if (snapped) {
             streamer.secondIdx = second
             if (streamer.scene is PokeBlockScene) return   // already battling
-            val ids = PokeData.speciesIds
-            val a = ids[rng.nextInt(ids.size)]
-            var b = ids[rng.nextInt(ids.size)]
-            while (b == a) b = ids[rng.nextInt(ids.size)]
-            Host.setScene(PokeBlockScene(a, b, System.currentTimeMillis(),
+            Host.setScene(PokeBlockScene(System.currentTimeMillis(),
                 onLog = { line -> runOnUiThread { status.text = line } }))
         } else {
             streamer.secondIdx = -1

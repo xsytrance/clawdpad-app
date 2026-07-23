@@ -32,13 +32,15 @@ object Blocks {
     private const val TOUCH_BITS = TOUCH_HEADER + 2 * TOUCH_XY
 
     class State {
-        @Volatile var lastAck = -1
+        @Volatile var lastAck = -1          // the MASTER's packet ACK (block 1 sync)
         @Volatile var lastAckAt = 0L
         @Volatile var topologyIndex = -1
         @Volatile var serial = ""
         @Volatile var battery = -1
         @Volatile var deviceCount = 0
         val devices = java.util.concurrent.CopyOnWriteArrayList<Triple<Int, String, Int>>()
+        /** per-device last packet ACK counter — lets the relay sync block 2. */
+        val acks = java.util.concurrent.ConcurrentHashMap<Int, Int>()
     }
 
     /** Decode one device→host SysEx; update state; return events (tests).
@@ -68,8 +70,11 @@ object Blocks {
                 0x02 -> {                                    // PACKET_ACK
                     if (totalBits - bitsRead < PACKET_COUNTER) break@loop
                     val c = read(PACKET_COUNTER)
-                    st.lastAck = c
+                    st.acks[deviceIndex] = c
                     st.lastAckAt = System.currentTimeMillis()
+                    // only the master drives block-1 sync; a secondary block's
+                    // ACK must not corrupt the master's packet counter.
+                    if (st.topologyIndex < 0 || deviceIndex == st.topologyIndex) st.lastAck = c
                     events.add("ack:$deviceIndex:$c")
                 }
                 0x01, 0x04 -> {                              // TOPOLOGY (+extend)
