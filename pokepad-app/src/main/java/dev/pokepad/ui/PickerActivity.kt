@@ -82,7 +82,7 @@ class PickerActivity : AppCompatActivity() {
     private fun tile(id: String, dex: dev.pokepad.core.Dex, cell: Int): LinearLayout {
         val s = dex.species[id]!!
         val feats = FEATURES[id] ?: autoFeatures(s.types)
-        val small = Sprite.bitmap(Renderer.render(s.shape, s.types, feats, -1).px)
+        val small = Sprite.bitmap(Renderer.render(s.shape, s.types, feats, -1, false, id).px)
         val big = Bitmap.createScaledBitmap(small, dp(64), dp(64), false)   // nearest-neighbor = crisp pixels
 
         val box = LinearLayout(this).apply {

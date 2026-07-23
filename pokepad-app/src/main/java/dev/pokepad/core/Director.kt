@@ -62,8 +62,8 @@ object Director {
         // ── render helpers (the left/player side can be a back view) ───────
         fun feats(sp: String) = FEATURES[sp] ?: autoFeatures(dex.species[sp]!!.types)
         fun backOf(sp: String) = leftBack && sp == leftSp
-        fun still(sp: String) = Renderer.render(dex.species[sp]!!.shape, dex.species[sp]!!.types, feats(sp), -1, backOf(sp))
-        fun idle(sp: String, t: Int) = Renderer.render(dex.species[sp]!!.shape, dex.species[sp]!!.types, feats(sp), t, backOf(sp))
+        fun still(sp: String) = Renderer.render(dex.species[sp]!!.shape, dex.species[sp]!!.types, feats(sp), -1, backOf(sp), sp)
+        fun idle(sp: String, t: Int) = Renderer.render(dex.species[sp]!!.shape, dex.species[sp]!!.types, feats(sp), t, backOf(sp), sp)
 
         val cells = ArrayList<Cell>()
         val cur = HashMap<String, String>()

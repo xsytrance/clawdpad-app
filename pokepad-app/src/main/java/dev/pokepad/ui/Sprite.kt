@@ -21,6 +21,6 @@ object Sprite {
     fun still(dex: Dex, species: String): Bitmap {
         val s = dex.species[species]!!
         val feats = FEATURES[species] ?: autoFeatures(s.types)
-        return bitmap(Renderer.render(s.shape, s.types, feats, -1).px)
+        return bitmap(Renderer.render(s.shape, s.types, feats, -1, false, species).px)
     }
 }
