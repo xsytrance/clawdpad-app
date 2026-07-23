@@ -384,4 +384,33 @@ class Battle(val dex: Dex, left: List<Mon>, right: List<Mon>, seed: Long = 0,
         }
         return winner
     }
+
+    // ── interactive / trainer mode ───────────────────────────────────────────
+    // Same rules as run(), but the LEFT side's move comes from the human each
+    // turn (RIGHT is the AI). Call start(), then step(move) per turn, reading
+    // over / winner / the active mon's legal moves between calls.
+
+    /** legal move names for the currently-active left mon (the human's choices) */
+    fun leftMoves(): List<String> = left.moves.filter { dex.moves.containsKey(it) }
+
+    /** send both leads in (emits SendIn) — call once before the first step. */
+    fun startInteractive() {
+        emit(Ev.SendIn("L", left.species.name, left.name)); emit(Ev.SendIn("R", right.species.name, right.name))
+        Abilities.onSwitchIn(left, right, log); Abilities.onSwitchIn(right, left, log)
+    }
+
+    /** play one turn with the human's chosen left move; AI picks for the right. */
+    fun stepInteractive(leftMove: String) {
+        if (over) return
+        left.tookDamage = false; right.tookDamage = false
+        val picks = mapOf(left to leftMove, right to chooseMove(right, left))
+        val order = picks.keys.sortedWith(compareByDescending<Mon> { dex.moves[picks[it]]!!.priority }
+                .thenByDescending { it.effSpeed() }.thenBy { rng.nextDouble() })
+        for (a in order) {
+            if (over || a.fainted) continue
+            act(a, other(a), picks[a]!!); handleFaints()
+            if (over) break
+        }
+        if (!over) { for (p in listOf(left, right)) { p.flinched = false; endOfTurn(p) }; handleFaints() }
+    }
 }

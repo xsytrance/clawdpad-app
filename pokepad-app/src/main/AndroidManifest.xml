@@ -47,6 +47,11 @@
             android:exported="false"
             android:screenOrientation="portrait" />
 
+        <activity
+            android:name=".ui.TrainerActivity"
+            android:exported="false"
+            android:screenOrientation="portrait" />
+
         <service
             android:name=".block.HostService"
             android:exported="false"

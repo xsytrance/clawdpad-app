@@ -66,10 +66,15 @@ class MainActivity : AppCompatActivity() {
             setTextColor(DIM); textSize = 13f; gravity = Gravity.CENTER
         }, lp(top = 14).also { it.width = dp(300) })
 
-        // primary: a random battle you watch on screen
-        root.addView(bigButton("⚔  START A BATTLE", RED, INK) {
-            startActivity(Intent(this, BattleActivity::class.java))   // random matchup
+        // primary: give the commands yourself — a real turn-based battle
+        root.addView(bigButton("🎮  TRAINER BATTLE", RED, INK) {
+            startActivity(Intent(this, TrainerActivity::class.java))
         }, lp(top = 34).also { it.width = dp(300); it.height = dp(60) })
+
+        // watch a quick auto-battle
+        root.addView(bigButton("⚔  QUICK BATTLE", CARD, INK) {
+            startActivity(Intent(this, BattleActivity::class.java))   // random matchup
+        }, lp(top = 12).also { it.width = dp(300); it.height = dp(56) })
 
         root.addView(bigButton("◎  CHOOSE FIGHTERS", CARD, INK) {
             startActivity(Intent(this, PickerActivity::class.java))

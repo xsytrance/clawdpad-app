@@ -44,7 +44,11 @@ object Director {
         val types = dex.species[sp]!!.types
         val mv = LinkedHashSet<String>()
         for (t in types) bestOfType(dex, t)?.let { mv.add(it) }   // STAB
-        bestOfType(dex, "normal")?.let { mv.add(it) }             // coverage
+        // coverage: fill toward 4 distinct moves so there's always a real choice
+        for (t in listOf("normal", "ground", "ice", "fire", "fighting", "rock", "electric")) {
+            if (mv.size >= 4) break
+            bestOfType(dex, t)?.let { mv.add(it) }
+        }
         if (mv.isEmpty()) mv.add(dex.moves.keys.first())          // safety net
         return mv.toList().take(4)
     }
@@ -57,12 +61,18 @@ object Director {
 
     /** build from pre-made battlers — this is how your REAL save team fights. */
     fun build(dex: Dex, a: Mon, b: Mon, seed: Long, leftBack: Boolean = false): Reel {
-        val leftSp = a.species.name; val rightSp = b.species.name
-        val maxL = a.maxHp.toFloat(); val maxR = b.maxHp.toFloat()
-
         val events = ArrayList<Ev>()
         val winner = Battle(dex, listOf(a), listOf(b), seed = seed, emit = { events.add(it) }).run()
+        return renderEvents(dex, a.species.name, b.species.name, events, a.maxHp.toFloat(), b.maxHp.toFloat(),
+            a.maxHp.toFloat(), b.maxHp.toFloat(), leftBack, winner?.let { cap(it.species.name) } ?: "draw", bothOut = false)
+    }
 
+    /** render a given event stream into cells — used both for a whole battle and,
+     *  in Trainer mode, ONE turn at a time (pass the pre-turn HP + bothOut=true so
+     *  the mon are already on the field instead of re-summoning). */
+    fun renderEvents(dex: Dex, leftSp: String, rightSp: String, events: List<Ev>,
+                     startHpL: Float, startHpR: Float, maxL: Float, maxR: Float,
+                     leftBack: Boolean = false, winnerName: String = "", bothOut: Boolean = false): Reel {
         // ── render helpers (the left/player side can be a back view) ───────
         fun feats(sp: String) = FEATURES[sp] ?: autoFeatures(dex.species[sp]!!.types)
         fun backOf(sp: String) = leftBack && sp == leftSp
@@ -71,7 +81,8 @@ object Director {
 
         val cells = ArrayList<Cell>()
         val cur = HashMap<String, String>()
-        var hpL = maxL; var hpR = maxR
+        if (bothOut) { cur["L"] = leftSp; cur["R"] = rightSp }   // trainer turns: already on field
+        var hpL = startHpL; var hpR = startHpR
         var gt = 0
         var msg = ""   // the message-box line; lingers through the following pause
         fun push(l: IntArray, r: IntArray, banner: String, hot: Boolean) {
@@ -123,6 +134,6 @@ object Director {
             is Ev.Win -> { msg = "${cap(ev.species)} wins!"; repeat(16) { compose(ev.side, idle(ev.species, gt).px.copyOf(), "WIN", true) } }
         }
 
-        return Reel(cells, cap(leftSp), cap(rightSp), winner?.let { cap(it.species.name) } ?: "draw")
+        return Reel(cells, cap(leftSp), cap(rightSp), winnerName)
     }
 }
