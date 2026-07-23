@@ -42,6 +42,11 @@
             android:exported="false"
             android:screenOrientation="portrait" />
 
+        <activity
+            android:name=".ui.SaveActivity"
+            android:exported="false"
+            android:screenOrientation="portrait" />
+
         <service
             android:name=".block.HostService"
             android:exported="false"

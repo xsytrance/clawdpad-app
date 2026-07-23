@@ -75,6 +75,10 @@ class MainActivity : AppCompatActivity() {
             startActivity(Intent(this, PickerActivity::class.java))
         }, lp(top = 12).also { it.width = dp(300); it.height = dp(56) })
 
+        root.addView(bigButton("✨  MY TEAM (LOAD SAVE)", CARD, GOLD) {
+            startActivity(Intent(this, SaveActivity::class.java))
+        }, lp(top = 12).also { it.width = dp(300); it.height = dp(56) })
+
         root.addView(bigButton("🔗  CONNECT BLOCKS", CARD, INK) {
             startActivity(Intent(this, ConnectActivity::class.java))
         }, lp(top = 12).also { it.width = dp(300); it.height = dp(56) })

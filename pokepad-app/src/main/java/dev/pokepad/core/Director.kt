@@ -40,7 +40,7 @@ object Director {
         return cand
     }
 
-    private fun movesetFor(dex: Dex, sp: String): List<String> {
+    fun movesetFor(dex: Dex, sp: String): List<String> {
         val types = dex.species[sp]!!.types
         val mv = LinkedHashSet<String>()
         for (t in types) bestOfType(dex, t)?.let { mv.add(it) }   // STAB
@@ -51,9 +51,13 @@ object Director {
 
     private fun cap(sp: String) = sp.replaceFirstChar { it.uppercase() }
 
-    fun build(dex: Dex, leftSp: String, rightSp: String, seed: Long, leftBack: Boolean = false): Reel {
-        val a = Mon(dex, leftSp, moves = movesetFor(dex, leftSp))
-        val b = Mon(dex, rightSp, moves = movesetFor(dex, rightSp))
+    fun build(dex: Dex, leftSp: String, rightSp: String, seed: Long, leftBack: Boolean = false): Reel =
+        build(dex, Mon(dex, leftSp, moves = movesetFor(dex, leftSp)),
+              Mon(dex, rightSp, moves = movesetFor(dex, rightSp)), seed, leftBack)
+
+    /** build from pre-made battlers — this is how your REAL save team fights. */
+    fun build(dex: Dex, a: Mon, b: Mon, seed: Long, leftBack: Boolean = false): Reel {
+        val leftSp = a.species.name; val rightSp = b.species.name
         val maxL = a.maxHp.toFloat(); val maxR = b.maxHp.toFloat()
 
         val events = ArrayList<Ev>()

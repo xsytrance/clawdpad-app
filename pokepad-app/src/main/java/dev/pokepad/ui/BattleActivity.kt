@@ -4,7 +4,9 @@ import android.os.Bundle
 import android.widget.FrameLayout
 import androidx.appcompat.app.AppCompatActivity
 import dev.pokepad.core.Director
+import dev.pokepad.core.Mon
 import dev.pokepad.core.PokeData
+import dev.pokepad.save.SaveData
 import java.util.Random
 
 /**
@@ -35,17 +37,30 @@ class BattleActivity : AppCompatActivity() {
         setContentView(view, FrameLayout.LayoutParams(
             FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT))
 
+        fromSave = intent.getBooleanExtra("fromSave", false)
         newBattle(intent.getStringExtra("left"), intent.getStringExtra("right"))
     }
 
+    private var fromSave = false
+
     private fun newBattle(left: String?, right: String?) {
+        val dex = PokeData.dex()
         val ids = PokeData.speciesIds
+        view.firstPerson = firstPerson
+        // YOUR real save mon vs a random challenger
+        val lead = if (fromSave) SaveData.battleLead else null
+        if (lead != null) {
+            var r = ids[rng.nextInt(ids.size)]; while (r == lead.species) r = ids[rng.nextInt(ids.size)]
+            val a = SaveData.mon(lead)
+            val b = Mon(dex, r, moves = Director.movesetFor(dex, r))
+            curL = a.species.name; curR = r
+            view.load(Director.build(dex, a, b, System.currentTimeMillis(), leftBack = firstPerson))
+            return
+        }
         val l = left ?: ids[rng.nextInt(ids.size)]
         var r = right ?: ids[rng.nextInt(ids.size)]
         while (r == l) r = ids[rng.nextInt(ids.size)]
         curL = l; curR = r
-        view.firstPerson = firstPerson
-        val reel = Director.build(PokeData.dex(), l, r, System.currentTimeMillis(), leftBack = firstPerson)
-        view.load(reel)
+        view.load(Director.build(dex, l, r, System.currentTimeMillis(), leftBack = firstPerson))
     }
 }
