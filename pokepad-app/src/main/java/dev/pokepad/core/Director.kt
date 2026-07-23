@@ -51,7 +51,7 @@ object Director {
 
     private fun cap(sp: String) = sp.replaceFirstChar { it.uppercase() }
 
-    fun build(dex: Dex, leftSp: String, rightSp: String, seed: Long): Reel {
+    fun build(dex: Dex, leftSp: String, rightSp: String, seed: Long, leftBack: Boolean = false): Reel {
         val a = Mon(dex, leftSp, moves = movesetFor(dex, leftSp))
         val b = Mon(dex, rightSp, moves = movesetFor(dex, rightSp))
         val maxL = a.maxHp.toFloat(); val maxR = b.maxHp.toFloat()
@@ -59,10 +59,11 @@ object Director {
         val events = ArrayList<Ev>()
         val winner = Battle(dex, listOf(a), listOf(b), seed = seed, emit = { events.add(it) }).run()
 
-        // ── render helpers ────────────────────────────────────────────────
+        // ── render helpers (the left/player side can be a back view) ───────
         fun feats(sp: String) = FEATURES[sp] ?: autoFeatures(dex.species[sp]!!.types)
-        fun still(sp: String) = Renderer.render(dex.species[sp]!!.shape, dex.species[sp]!!.types, feats(sp), -1)
-        fun idle(sp: String, t: Int) = Renderer.render(dex.species[sp]!!.shape, dex.species[sp]!!.types, feats(sp), t)
+        fun backOf(sp: String) = leftBack && sp == leftSp
+        fun still(sp: String) = Renderer.render(dex.species[sp]!!.shape, dex.species[sp]!!.types, feats(sp), -1, backOf(sp))
+        fun idle(sp: String, t: Int) = Renderer.render(dex.species[sp]!!.shape, dex.species[sp]!!.types, feats(sp), t, backOf(sp))
 
         val cells = ArrayList<Cell>()
         val cur = HashMap<String, String>()

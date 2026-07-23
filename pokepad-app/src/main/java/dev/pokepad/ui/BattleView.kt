@@ -29,6 +29,9 @@ class BattleView(context: Context) : View(context) {
     private var startNanos = 0L
     private var doneHold = false
     var onTapWhenDone: (() -> Unit)? = null
+    var onToggleView: (() -> Unit)? = null
+    var firstPerson = true
+    private val toggleRect = RectF()
 
     private val px = Paint().apply { isFilterBitmap = false; isAntiAlias = false }
     private val fill = Paint(Paint.ANTI_ALIAS_FLAG)
@@ -74,16 +77,27 @@ class BattleView(context: Context) : View(context) {
         // background
         fill.shader = bgShader; canvas.drawRect(0f, 0f, w, h, fill); fill.shader = null
 
-        // platforms
-        fill.color = PLAT
-        canvas.drawOval(RectF(w * 0.44f, h * 0.30f, w * 0.98f, h * 0.40f), fill)   // opponent
-        canvas.drawOval(RectF(w * 0.02f, h * 0.60f, w * 0.60f, h * 0.72f), fill)   // player
+        // camera: FIRST-PERSON exaggerates depth (player big & low in front,
+        // opponent small & high & far); SIDE is a balanced two-up framing.
+        val oppCx: Float; val oppCyBase: Float; val oppSize: Float
+        val plCx: Float; val plCyBase: Float; val plSize: Float
+        if (firstPerson) {
+            oppCx = w * 0.66f; oppCyBase = h * 0.34f; oppSize = w * 0.30f
+            plCx = w * 0.36f;  plCyBase = h * 0.78f; plSize = w * 0.56f
+        } else {
+            oppCx = w * 0.71f; oppCyBase = h * 0.345f; oppSize = w * 0.34f
+            plCx = w * 0.31f;  plCyBase = h * 0.665f; plSize = w * 0.44f
+        }
 
-        // sprites (opponent = right, smaller/farther; player = left, bigger/closer)
-        val oppSize = w * 0.34f
-        drawSprite(canvas, rightBmp[i], w * 0.71f - oppSize / 2, h * 0.345f - oppSize, oppSize)
-        val plSize = w * 0.44f
-        drawSprite(canvas, leftBmp[i], w * 0.31f - plSize / 2, h * 0.665f - plSize, plSize)
+        // platforms under each mon
+        fill.color = PLAT
+        canvas.drawOval(RectF(oppCx - oppSize * 0.62f, oppCyBase - oppSize * 0.10f, oppCx + oppSize * 0.62f, oppCyBase + oppSize * 0.14f), fill)
+        canvas.drawOval(RectF(plCx - plSize * 0.60f, plCyBase - plSize * 0.06f, plCx + plSize * 0.60f, plCyBase + plSize * 0.14f), fill)
+
+        // sprites (opponent = right/front, player = left; in first-person the
+        // player's frames are already rendered as a back view by the Director)
+        drawSprite(canvas, rightBmp[i], oppCx - oppSize / 2, oppCyBase - oppSize, oppSize)
+        drawSprite(canvas, leftBmp[i], plCx - plSize / 2, plCyBase - plSize, plSize)
 
         // HP boxes
         drawHpBox(canvas, dp(14f), dp(28f), w * 0.52f, r.rightName, c.hpR, alignRight = false)
@@ -109,13 +123,25 @@ class BattleView(context: Context) : View(context) {
             text.color = GOLD; text.textSize = dp(15f); text.textAlign = Paint.Align.CENTER
             canvas.drawText("▶  TAP FOR A REMATCH", w / 2f, h - dp(52f), text)
         }
+
+        // camera toggle (top-right, clear of the status bar)
+        toggleRect.set(w - dp(96f), dp(84f), w - dp(14f), dp(84f) + dp(34f))
+        roundRect(canvas, toggleRect.left, toggleRect.top, toggleRect.right, toggleRect.bottom, dp(9f), BOX, BOX_LINE, dp(2f))
+        text.color = INK; text.textSize = dp(12f); text.textAlign = Paint.Align.CENTER
+        canvas.drawText(if (firstPerson) "◉ 1ST" else "◫ SIDE", toggleRect.centerX(), toggleRect.centerY() + dp(4f), text)
+
         if (!doneHold) postInvalidateOnAnimation()
     }
 
     override fun performClick(): Boolean { super.performClick(); return true }
 
-    init {
-        setOnClickListener { if (doneHold) onTapWhenDone?.invoke() }
+    override fun onTouchEvent(event: android.view.MotionEvent): Boolean {
+        if (event.action == android.view.MotionEvent.ACTION_UP) {
+            if (toggleRect.contains(event.x, event.y)) { onToggleView?.invoke(); performClick(); return true }
+            if (doneHold) onTapWhenDone?.invoke()
+            performClick()
+        }
+        return true
     }
 
     private fun drawSprite(canvas: Canvas, bmp: Bitmap, x: Float, y: Float, size: Float) {

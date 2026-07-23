@@ -8,28 +8,34 @@ import dev.pokepad.core.PokeData
 import java.util.Random
 
 /**
- * Hosts the on-phone battle. Takes two species from the intent (or picks a random
- * matchup), runs the real engine via the Director, and plays the reel in a
- * BattleView. Tap after it ends for a fresh random rematch.
+ * Hosts the on-phone battle. Runs the real engine via the Director and plays the
+ * reel in a BattleView. Two camera modes: FIRST-PERSON (default, classic Gen-III
+ * framing — your mon big & from behind in the foreground, opponent small &
+ * distant) and SIDE (both front-on). The VIEW button flips between them; tapping
+ * after a fight ends starts a fresh random rematch.
  */
 class BattleActivity : AppCompatActivity() {
 
     private lateinit var view: BattleView
     private val rng = Random()
+    private var firstPerson = true
+    private var curL: String? = null
+    private var curR: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         PokeData.ensure(this)
 
-        val fixedL = intent.getStringExtra("left")
-        val fixedR = intent.getStringExtra("right")
-
         view = BattleView(this)
-        view.onTapWhenDone = { newBattle(null, null) }   // rematch = new random fight
+        view.onTapWhenDone = { newBattle(null, null) }
+        view.onToggleView = {
+            firstPerson = !firstPerson
+            newBattle(curL, curR)   // same matchup, new camera
+        }
         setContentView(view, FrameLayout.LayoutParams(
             FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT))
 
-        newBattle(fixedL, fixedR)
+        newBattle(intent.getStringExtra("left"), intent.getStringExtra("right"))
     }
 
     private fun newBattle(left: String?, right: String?) {
@@ -37,7 +43,9 @@ class BattleActivity : AppCompatActivity() {
         val l = left ?: ids[rng.nextInt(ids.size)]
         var r = right ?: ids[rng.nextInt(ids.size)]
         while (r == l) r = ids[rng.nextInt(ids.size)]
-        val reel = Director.build(PokeData.dex(), l, r, System.currentTimeMillis())
+        curL = l; curR = r
+        view.firstPerson = firstPerson
+        val reel = Director.build(PokeData.dex(), l, r, System.currentTimeMillis(), leftBack = firstPerson)
         view.load(reel)
     }
 }

@@ -80,7 +80,10 @@ object Renderer {
         "ball", "blob" -> 7 to 6; "tentacles" -> 7 to 5; else -> 7 to 4
     }
 
-    fun render(shape: String, types: List<String>, features: List<String>, t: Int = -1): Frame {
+    // features that only read from the front (skipped in a back/first-person view)
+    private val FACE_FEATURES = setOf("grin", "cheeks", "whiskers", "gem", "antennae", "crest", "ears")
+
+    fun render(shape: String, types: List<String>, features: List<String>, t: Int = -1, back: Boolean = false): Frame {
         val fr = Frame()
         val body = TYPE_COLOR[types[0]] ?: 0xBEB4A0
         val accent = TYPE_COLOR[types.getOrElse(1) { types[0] }] ?: body
@@ -97,8 +100,11 @@ object Renderer {
             else -> { ellipse(fr, 7.0, 4.5, 2.6, 2.6, body); for (y in 6..11) for (x in 5..9) fr.set(x, y, body); for (s in intArrayOf(-1, 1)) for (y in 6..8) fr.set(7 + s * 4, y, shade(accent, 0.95)); for (lx in intArrayOf(6, 8)) for (y in 12..13) fr.set(lx, y, dk) }
         }
         val blink = t >= 0 && (t % 16) == 8
-        for (f in features) feature(fr, f, hx, hy, body, accent, t)
-        if (blink) { fr.set(hx - 1, hy, DARKEYE); fr.set(hx, hy, DARKEYE); fr.set(hx + 1, hy, DARKEYE) }
+        for (f in features) { if (back && f in FACE_FEATURES) continue; feature(fr, f, hx, hy, body, accent, t) }
+        if (back) {
+            // seen from behind: no face, a shaded spine down the back
+            for (yy in hy - 1..hy + 4) if (fr.on(hx, yy)) fr.set(hx, yy, shade(body, 0.62))
+        } else if (blink) { fr.set(hx - 1, hy, DARKEYE); fr.set(hx, hy, DARKEYE); fr.set(hx + 1, hy, DARKEYE) }
         else eyes(fr, hx, hy, if (shape == "quadruped" || shape == "legs") 1 else 2)
         outline(fr)
         if (t >= 0 && (t % 8) >= 4) shiftV(fr, -1)   // gentle breathing bob
