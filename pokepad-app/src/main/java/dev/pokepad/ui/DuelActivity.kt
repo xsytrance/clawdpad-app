@@ -73,6 +73,8 @@ class DuelActivity : AppCompatActivity() {
     private var side: DuelSide? = null
     private var isHost = false
     private var autoplay = false
+    @Volatile private var searching = false
+    @Volatile private var inBattle = false
     private lateinit var mySpec: Proto.MonSpec
 
     // block mirror
@@ -162,7 +164,8 @@ class DuelActivity : AppCompatActivity() {
     }
 
     private fun startHost() {
-        isHost = true
+        isHost = true; searching = false
+        server?.stop(); client?.stop()
         hostBtn.visibility = View.GONE; joinBtn.visibility = View.GONE; ipRow.visibility = View.GONE
         lobbyStatus.text = "Waiting for a challenger…\nTell them to tap JOIN.\n(your address: ${localIp()})"
         val core = HostCore(PokeData.dex(), mySpec, System.currentTimeMillis(),
@@ -175,22 +178,31 @@ class DuelActivity : AppCompatActivity() {
         server = DuelServer(mySpec.nickname,
             onLine = { l -> core.onLine(l) },
             onJoin = { addr -> ui.post { lobbyStatus.text = "challenger connected ($addr)!" } },
-            onDrop = { msg -> ui.post { toast(msg); finish() } })
+            onDrop = { msg -> ui.post { backToLobby("⚡ $msg") } })
         server?.start()
     }
 
     private fun startJoin() {
-        isHost = false
+        isHost = false; searching = true
+        server?.stop(); client?.stop()
         hostBtn.visibility = View.GONE; joinBtn.visibility = View.GONE; ipRow.visibility = View.VISIBLE
         lobbyStatus.text = "Searching for a host on your wifi…"
-        DuelClient.discover(6, onFound = { ip, name, _ ->
-            ui.post { lobbyStatus.text = "found $name at $ip — connecting…"; connectTo(ip) }
+        scan()
+    }
+
+    /** keep scanning until a host appears, the user types an IP, or we leave */
+    private fun scan() {
+        if (!searching || isFinishing) return
+        DuelClient.discover(4, onFound = { ip, name, _ ->
+            ui.post { if (searching) { searching = false; lobbyStatus.text = "found $name at $ip — connecting…"; connectTo(ip) } }
         }, onMiss = {
-            ui.post { lobbyStatus.text = "no host found — type their IP below" }
+            ui.post { if (searching) { lobbyStatus.text = "searching… (ask them to tap HOST — or type their IP)"; scan() } }
         })
     }
 
     private fun connectTo(ip: String) {
+        searching = false
+        client?.stop()
         val core = JoinCore(PokeData.dex(), mySpec,
             send = { l -> client?.send(l) },
             onReel = { r -> ui.post { playReel(r) } },
@@ -201,8 +213,20 @@ class DuelActivity : AppCompatActivity() {
         client = DuelClient(
             onLine = { l -> core.onLine(l) },
             onConnected = { client?.send(core.helloLine()); ui.post { lobbyStatus.text = "connected — summoning!" } },
-            onDrop = { msg -> ui.post { toast(msg); finish() } })
+            onDrop = { msg -> ui.post { backToLobby("⚡ $msg") } })
         client?.connect(ip)
+    }
+
+    /** a drop never ejects you — back to the lobby, ready to host/join again */
+    private fun backToLobby(msg: String) {
+        if (isFinishing) return
+        inBattle = false; searching = false
+        server?.stop(); server = null
+        client?.stop(); client = null
+        side = null; curReel = null
+        showLobby()
+        hostBtn.visibility = View.VISIBLE; joinBtn.visibility = View.VISIBLE; ipRow.visibility = View.GONE
+        lobbyStatus.text = "$msg\nready when you are."
     }
 
     // ── battle ───────────────────────────────────────────────────────────────
@@ -266,8 +290,20 @@ class DuelActivity : AppCompatActivity() {
             LinearLayout.LayoutParams.MATCH_PARENT))
     }
 
-    private fun showLobby() { lobby.visibility = View.VISIBLE; battleBox.visibility = View.GONE }
-    private fun showBattle() { lobby.visibility = View.GONE; battleBox.visibility = View.VISIBLE }
+    private fun showLobby() { lobby.visibility = View.VISIBLE; battleBox.visibility = View.GONE; inBattle = false }
+    private fun showBattle() { lobby.visibility = View.GONE; battleBox.visibility = View.VISIBLE; inBattle = true }
+
+    @Deprecated("Deprecated in Java")
+    override fun onBackPressed() {
+        if (inBattle) {
+            android.app.AlertDialog.Builder(this)
+                .setTitle("Leave the battle?")
+                .setMessage("Your opponent will be sent back to their lobby.")
+                .setPositiveButton("Leave") { _, _ -> finish() }
+                .setNegativeButton("Keep fighting", null)
+                .show()
+        } else super.onBackPressed()
+    }
 
     private fun playReel(r: Reel) {
         showBattle()

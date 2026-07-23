@@ -34,6 +34,7 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         PokeData.ensure(this)   // load the dex once
+        dev.pokepad.save.SaveData.ensure(this)   // auto-restores your last-loaded save
         Sfx.ensure(this)
 
         val scroll = ScrollView(this).apply { setBackgroundColor(BG); isFillViewport = true }
@@ -86,13 +87,15 @@ class MainActivity : AppCompatActivity() {
             startActivity(Intent(this, PickerActivity::class.java))
         }, lp(top = 12).also { it.width = dp(300); it.height = dp(56) })
 
-        root.addView(bigButton("✨  MY TEAM (LOAD SAVE)", CARD, GOLD) {
+        teamBtn = bigButton("✨  MY TEAM (LOAD SAVE)", CARD, GOLD) {
             startActivity(Intent(this, SaveActivity::class.java))
-        }, lp(top = 12).also { it.width = dp(300); it.height = dp(56) })
+        }
+        root.addView(teamBtn, lp(top = 12).also { it.width = dp(300); it.height = dp(56) })
 
-        root.addView(bigButton("🔗  CONNECT BLOCKS", CARD, INK) {
+        blocksBtn = bigButton("🔗  CONNECT BLOCKS", CARD, INK) {
             startActivity(Intent(this, ConnectActivity::class.java))
-        }, lp(top = 12).also { it.width = dp(300); it.height = dp(56) })
+        }
+        root.addView(blocksBtn, lp(top = 12).also { it.width = dp(300); it.height = dp(56) })
 
         root.addView(TextView(this).apply {
             text = "facts are sacred · feelings are free"
@@ -103,11 +106,23 @@ class MainActivity : AppCompatActivity() {
         Insets.pad(root)
     }
 
+    private var teamBtn: TextView? = null
+    private var blocksBtn: TextView? = null
+
+    override fun onResume() {
+        super.onResume()
+        // live status on the buttons — the app tells you where it's at
+        val t = dev.pokepad.save.SaveData.truth
+        teamBtn?.text = if (t != null) "✨  MY TEAM — ${t.trainer.name} ✓" else "✨  MY TEAM (LOAD SAVE)"
+        val linked = dev.pokepad.block.Host.streamer?.isAlive == true
+        blocksBtn?.text = if (linked) "🔗  BLOCKS — CONNECTED ✓" else "🔗  CONNECT BLOCKS"
+    }
+
     private fun lp(top: Int = 0): LinearLayout.LayoutParams =
         LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT)
             .apply { topMargin = dp(top) }
 
-    private fun bigButton(label: String, bg: Int, fg: Int, onClick: () -> Unit): View {
+    private fun bigButton(label: String, bg: Int, fg: Int, onClick: () -> Unit): TextView {
         return TextView(this).apply {
             text = label
             setTextColor(fg); textSize = 16.5f

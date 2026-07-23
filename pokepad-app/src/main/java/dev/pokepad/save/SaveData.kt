@@ -13,6 +13,7 @@ import dev.pokepad.core.PokeData
  */
 object SaveData {
     @Volatile private var parser: Gen3Save? = null
+    @Volatile private var appCtx: Context? = null
     @Volatile var truth: SaveTruth? = null          // last loaded save
     @Volatile var battleLead: SaveMon? = null        // the mon chosen for a battle
 
@@ -21,6 +22,7 @@ object SaveData {
         synchronized(this) {
             if (parser != null) return
             PokeData.ensure(ctx)
+            appCtx = ctx.applicationContext
             val am = ctx.applicationContext.assets
             fun tsv(n: String): Map<Int, String> = am.open("poke/$n").bufferedReader().useLines { seq ->
                 seq.filter { it.isNotBlank() }.map { it.split("\t") }.associate { it[0].toInt() to it[1] }
@@ -28,10 +30,20 @@ object SaveData {
             val dex = PokeData.dex()
             parser = Gen3Save(tsv("gen3_i2n.tsv"), tsv("gen3_moveidx.tsv"),
                 { sp -> listOfNotNull(dex.species[sp]?.ab0, dex.species[sp]?.ab1) })
+            // load once, keep forever: restore the last successfully-loaded save
+            runCatching {
+                val f = java.io.File(appCtx!!.filesDir, "last.sav")
+                if (f.exists()) truth = parser!!.parse(f.readBytes())
+            }
         }
     }
 
-    fun parse(bytes: ByteArray): SaveTruth { val t = parser!!.parse(bytes); truth = t; return t }
+    fun parse(bytes: ByteArray): SaveTruth {
+        val t = parser!!.parse(bytes); truth = t
+        // persist so the team survives app restarts (read-only copy, private dir)
+        runCatching { appCtx?.let { java.io.File(it.filesDir, "last.sav").writeBytes(bytes) } }
+        return t
+    }
 
     /** SaveMon → engine Mon with its real spread; if it has no damaging move
      *  (e.g. a pure-status set) fall back to a synthesised set so it can fight. */

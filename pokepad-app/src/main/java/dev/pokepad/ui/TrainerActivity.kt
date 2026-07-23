@@ -98,7 +98,7 @@ class TrainerActivity : AppCompatActivity() {
             setTypeface(typeface, Typeface.BOLD); visibility = View.GONE
             background = GradientDrawable().apply { cornerRadius = dp(14).toFloat(); setColor(Color.parseColor("#E23B3B")) }
             isClickable = true; isFocusable = true
-            setOnClickListener { recreate() }
+            setOnClickListener { Sfx.play("blip"); prompt.setTextColor(INK); startBattle() }   // in-place, no flicker; voice mode survives
             setPadding(0, dp(14), 0, dp(14))
         }
         panel.addView(again, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { topMargin = dp(8) })

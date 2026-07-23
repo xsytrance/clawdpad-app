@@ -118,18 +118,26 @@ object Director {
             }
             is Ev.Used -> {
                 val defSide = if (ev.side == "L") "R" else "L"
-                if (ev.dmg > 0) { if (defSide == "L") hpL = (hpL - ev.dmg).coerceAtLeast(0f) else hpR = (hpR - ev.dmg).coerceAtLeast(0f) }
+                // HP holds until the IMPACT frame, then drains over a few frames
+                val pre = if (defSide == "L") hpL else hpR
+                val post = (pre - ev.dmg).coerceAtLeast(0f)
                 msg = "${cap(ev.species)} used ${moveName(ev.move)}!"
                 val (banner, hot) = bannerFor(ev.eff, ev.move)
                 for (t in 0 until Anim.ATTACK) {
                     if (t == 4 && ev.dmg > 0)                            // impact frame
                         cue = when { ev.eff > 1.0 -> "super"; ev.eff < 1.0 -> "resist"; else -> "hit" }
+                    if (ev.dmg > 0) {
+                        val f = ((t - 3).coerceIn(0, 4)) / 4f            // 0 until impact → drains over 4 frames
+                        val v = pre + (post - pre) * f
+                        if (defSide == "L") hpL = v else hpR = v
+                    }
                     val atk = Anim.attack(still(ev.species), t).px.copyOf()
                     val hurtT = t - 4
                     val def = if (ev.dmg > 0 && hurtT in 0 until Anim.HURT) Anim.hurt(still(cur[defSide]!!), hurtT).px.copyOf()
                               else sideIdle(defSide)
                     push(if (ev.side == "L") atk else def, if (ev.side == "L") def else atk, banner, hot)
                 }
+                if (ev.dmg > 0) { if (defSide == "L") hpL = post else hpR = post }
                 gap(1)
             }
             is Ev.Faint -> {
