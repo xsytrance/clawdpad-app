@@ -173,12 +173,22 @@ class AuguryActivity : Activity() {
                     ui.post {
                         board.show(f)
                         val live = f.optBoolean("live", false)
+                        val attached = f.optBoolean("attached", false)
                         val age = f.optDouble("age_s", 0.0)
-                        // A frozen board must never be presented as a live one.
-                        status.text = if (live) "● live · ${age}s ago"
-                        else "⚠ ${age}s old — auguryd may be down. NOT live."
+                        // THREE states, not two. "auguryd is running" and "the
+                        // panel is plugged in" are different facts, and showing
+                        // a confident board for an unplugged one is the failure
+                        // this screen exists to prevent.
+                        status.text = when {
+                            !live -> "⚠ ${age}s old — auguryd may be down. NOT live."
+                            !attached -> "⚠ no panel attached — the matrix is unplugged. This is what it WOULD show."
+                            else -> "● live · ${age}s ago"
+                        }
                         status.setTextColor(
-                            if (live) MUTED else Color.parseColor("#c47f10"))
+                            if (live && attached) MUTED else Color.parseColor("#c47f10"))
+                        // Dim the board when nothing is receiving it, so the eye
+                        // knows before the words do.
+                        board.alpha = if (live && attached) 1f else 0.45f
                         facts.text = listOf(
                             "Drift          ${f.optInt("drift")}",
                             "Commission     ${f.optString("title")}",
