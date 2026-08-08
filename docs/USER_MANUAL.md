@@ -175,3 +175,53 @@ Most players never need this — it's for hacking on the block protocol.
   the snap-battle picks random species from the full dex.
 
 *Made for Rod. Snap 'em together and watch them fight.* 🔥
+
+---
+
+## THE AUGURY — the matrix, in your hand
+
+**Added 2026-08-08.** A section in the hub, and a landscape screen behind it.
+
+Tap **The Augury** card on the home screen. The hub card carries a live
+thumbnail of the real board (refreshed every 10s — a glance, not a readout),
+so the hub itself tells you something rather than being a door with a label.
+
+The screen opens **locked landscape**, because the panel is 64×32 — two to one —
+and that is how it is mounted. A portrait mirror would waste four fifths of the
+screen on nothing and shrink the only thing worth looking at. The screen also
+stays awake there; a wall-mounted readout that blanks after thirty seconds is
+not a readout. That is scoped to that screen only — the hub still lets your
+phone sleep.
+
+**What it draws.** The same 64×32 the firmware draws: the same 3×5 font
+(extracted from `dazzler/firmware/code.py`, not redrawn), the same palette, the
+same row layout, and the same colour law — cyan fine, amber tight, red nearly
+gone, and only the *free* figure coloured because that is the number that can go
+wrong.
+
+**Say something.** Type a line, tap SEND TO THE GLASS. It rides the Cadence, so
+quiet hours still bind. The panel renders 15 characters and the app tells you
+so *while you type* rather than truncating afterwards and leaving you wondering.
+
+**When it cannot reach Prime** it says so, in red, and clears the board. A
+frozen mirror presented as a live one is worse than no mirror.
+
+### Where it gets its data
+
+```
+auguryd ─► ~/.local/state/augury/frame.json ─► Archive :8801 ─► the app
+```
+
+Nothing new listens on the network for this. `Prime.API` defaults to
+`http://100.96.211.44:8801`; cleartext is permitted for **that host and the
+tailnet only** (`res/xml/network_security_config.xml`), never app-wide.
+
+### Building it
+
+```bash
+JAVA_HOME=$HOME/jdk ~/gradle/bin/gradle :app:assembleDebug
+```
+
+`JAVA_HOME` is not set in this shell by default — without it Gradle fails and
+leaves the *previous* APK sitting in `app/build/outputs/`, which looks exactly
+like success. Delete the APK before building if you want to be sure.

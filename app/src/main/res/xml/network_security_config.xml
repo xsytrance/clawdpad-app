@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The Citadel speaks HTTP on the Ley Lines (the tailnet), which is already an
+  authenticated, encrypted overlay — but Android blocks cleartext by default
+  since API 28, so without this the Augury mirror fails with no useful error.
+
+  NAMED HOSTS ONLY. A blanket android:usesCleartextTraffic="true" would open the
+  whole app to plaintext against anything, forever, to fix one screen.
+-->
+<network-security-config>
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="false">100.96.211.44</domain>
+        <domain includeSubdomains="false">prime</domain>
+        <domain includeSubdomains="true">tail5a1fa3.ts.net</domain>
+    </domain-config>
+</network-security-config>

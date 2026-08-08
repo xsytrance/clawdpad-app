@@ -9,7 +9,8 @@
     <application
         android:label="clawdpad"
         android:icon="@mipmap/ic_launcher"
-        android:theme="@style/Theme.Clawdpad">
+        android:theme="@style/Theme.Clawdpad"
+        android:networkSecurityConfig="@xml/network_security_config">
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -19,6 +20,15 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
+        <!-- THE AUGURY. Locked landscape: the panel is 64x32 and that is how
+             it is mounted; a portrait mirror wastes four fifths of the screen
+             on nothing and shrinks the only thing worth looking at. -->
+        <activity
+            android:name=".AuguryActivity"
+            android:exported="false"
+            android:label="The Augury"
+            android:screenOrientation="landscape"
+            android:configChanges="orientation|screenSize|keyboardHidden"/>
         <service
             android:name=".HostService"
             android:exported="false"

@@ -70,6 +70,26 @@ class MainActivity : AppCompatActivity() {
             if (stroke != 0) setStroke(dp(2), stroke)
         }
 
+    /** Refresh the hub's little board every 10s — a glance, not a readout.
+     *  Polling it as fast as the real panel would be a battery tax for a
+     *  thumbnail he is scrolling past. */
+    private fun startAuguryPeek(view: AuguryView) {
+        val ui = android.os.Handler(android.os.Looper.getMainLooper())
+        fun tick() {
+            Thread {
+                val f = try {
+                    val c = java.net.URL("${'$'}{Prime.API}/api/augury/frame")
+                        .openConnection() as java.net.HttpURLConnection
+                    c.connectTimeout = 3000; c.readTimeout = 3000
+                    org.json.JSONObject(c.inputStream.bufferedReader().readText())
+                } catch (e: Exception) { null }
+                ui.post { view.show(f) }
+            }.start()
+            ui.postDelayed({ tick() }, 10_000)
+        }
+        tick()
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         window.statusBarColor = BG  // no KEEP_SCREEN_ON: the foreground
@@ -393,6 +413,48 @@ class MainActivity : AppCompatActivity() {
             isHorizontalScrollBarEnabled = false
             addView(fightShelf)
         })
+
+        // ── THE AUGURY: the 64x32 matrix, mirrored ──────────────────
+        // A hub section, not a buried menu item: the panel is the Dominion's
+        // status organ and he looks at it constantly. Opens LANDSCAPE, because
+        // the board is 2:1 and that is how it is mounted — a portrait mirror
+        // would waste four fifths of the screen on nothing.
+        root.addView(TextView(this).apply {
+            text = "THE AUGURY"
+            textSize = 12f; letterSpacing = 0.18f
+            setTextColor(DIM); setPadding(dp(4), dp(18), 0, dp(8))
+        })
+        val auguryCard = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            background = rounded(CARD, BORDER, 14)
+            setPadding(dp(14), dp(12), dp(14), dp(12))
+            pressable {
+                sounds?.play("boop", 0.4f)
+                startActivity(android.content.Intent(
+                    this@MainActivity, AuguryActivity::class.java))
+            }
+        }
+        // A live thumbnail of the real board, so the hub itself tells him
+        // something rather than being a door with a label on it.
+        val auguryPeek = AuguryView(this)
+        auguryCard.addView(auguryPeek,
+            LinearLayout.LayoutParams(dp(128), dp(64)))
+        auguryCard.addView(LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(14), 0, 0, 0)
+            addView(TextView(this@MainActivity).apply {
+                text = "The matrix"
+                setTextColor(INK); textSize = 15f
+            })
+            addView(TextView(this@MainActivity).apply {
+                text = "64x32 · tap for landscape"
+                setTextColor(DIM); textSize = 12f
+            })
+        }, LinearLayout.LayoutParams(0,
+            LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+        root.addView(auguryCard)
+        startAuguryPeek(auguryPeek)
 
         // ── message / art mode: put words on the glass ──────────────
         root.addView(TextView(this).apply {
